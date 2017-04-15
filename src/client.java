@@ -85,7 +85,7 @@ public class client {
 			
 
 			
-			File file = new File("F:/eclipse-workspace/Socket1/src/text.txt");
+			/*File file = new File("F:/eclipse-workspace/Socket1/src/text.txt");
 			
 			serverOutput.writeUTF(file.getName());
 			serverOutput.flush();
@@ -126,7 +126,7 @@ public class client {
 			System.out.println(temp);
 			
 			
-			fs.close();
+			fs.close();*/
 			
 			
 			

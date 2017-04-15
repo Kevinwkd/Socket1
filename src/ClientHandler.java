@@ -45,24 +45,12 @@ public class ClientHandler implements Runnable {
 				
 			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
 			clientInput = new DataInputStream(connectionSock.getInputStream());
-			String fileName = clientInput.readUTF();
+			
+			/*String fileName = clientInput.readUTF();
 			System.out.println(fileName);
 			long fileLength = clientInput.readLong();
 			System.out.println(fileLength);
 			
-			Option uri = Option.builder("uri")
-					.desc("specify the location")
-					.hasArg()
-					.argName("uri")
-					.build();
-			Option host = Option.builder("host")
-					.desc("specify the ip address")
-					.hasArg()
-					.argName("ip address")
-					.build();
-			Options options = new Options();
-			options.addOption(uri);
-			options.addOption(host);
 			
 			
 			File f = new File("F:/eclipse-workspace/Socket1/src/temp/" );
@@ -104,7 +92,7 @@ public class ClientHandler implements Runnable {
 			System.out.println(confirm);
 
 			
-			fs.close();
+			fs.close();*/
 			
 
 			
