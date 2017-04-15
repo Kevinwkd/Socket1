@@ -9,6 +9,8 @@ import java.io.IOException;
 import org.apache.commons.cli.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class ClientHandler implements Runnable {
 	public int name;
@@ -94,9 +96,22 @@ public class ClientHandler implements Runnable {
 			
 			fs.close();*/
 			
+			JSONParser parser = new JSONParser();
+			
+			while(true){
+		    	if(clientInput.available() > 0){
+		    		// Attempt to convert read data to JSON
+		    		JSONObject command = (JSONObject) parser.parse(clientInput.readUTF());
+		    		System.out.println("COMMAND RECEIVED: "+command.toJSONString());
+		    		/*Integer result = parseCommand(command);
+		    		JSONObject results = new JSONObject();
+		    		results.put("result", result);
+		    		output.writeUTF(results.toJSONString());*/
+		    	}
+		    }
 
 			
-		} catch (IOException e) {
+		} catch (IOException | ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
