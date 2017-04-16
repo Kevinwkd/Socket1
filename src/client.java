@@ -136,6 +136,7 @@ public class client {
 							.desc("publish a file in server")
 							.build();
 			Option name = Option.builder("name")
+						 .hasArg()
 						 .required(false)
 						 .desc("the name of publish resource")
 						 .build();
