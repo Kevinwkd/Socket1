@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import org.apache.commons.cli.*;
 
 public class client {
 	public String hostname;
@@ -45,6 +46,7 @@ public class client {
 	
 	
 	
+	@SuppressWarnings("unchecked")
 	public void run(){
 		try {
 			System.out.println("Connecting to server on port" + port);
@@ -127,13 +129,81 @@ public class client {
 			
 			
 			fs.close();*/
+			JSONObject newCommand = new JSONObject();
 			
+			Option publish = Option.builder("publish")
+							.required(false)
+							.desc("publish a file in server")
+							.build();
+			Option name = Option.builder("name")
+						 .required(false)
+						 .desc("the name of publish resource")
+						 .build();
+			Option tags = Option.builder("tags")
+						 .required(false)
+						 .numberOfArgs(2)
+						 .desc("tags of resource")
+						 .build();
+			Option description = Option.builder("description")
+					 .required(false)
+					 .hasArg()
+					 .desc("description of resource")
+					 .build();
+			Option uri = Option.builder("uri")
+					 .required(true)
+					 .hasArg()
+					 .desc("location of resource")
+					 .build();
 			
+			Options options = new Options();
+			options.addOption(publish);
+			options.addOption(name);
+			options.addOption(tags);
+			options.addOption(description);
+			options.addOption(uri);
+			
+			CommandLineParser parser = new DefaultParser();
+			CommandLine cmdLine = parser.parse(options, Args);
+			
+			JSONObject subCommand = new JSONObject();
+			
+			if(cmdLine.hasOption("publish")){
+				newCommand.put("command", "publish");
+			}
+	
+			if(cmdLine.hasOption("name")){
+				subCommand.put("name", cmdLine.getOptionValue("name"));
+			}
+			
+			if(cmdLine.hasOption("tags")){
+				String[] tagsarg = new String[2];
+				tagsarg = cmdLine.getOptionValues("tags");
+				JSONArray arr = new JSONArray();
+				arr.add(tagsarg[0]);
+				arr.add(tagsarg[1]);
+				subCommand.put("tags", arr);
+			}
+
+			if(cmdLine.hasOption("description")){
+				subCommand.put("description", cmdLine.getOptionValue("description"));
+			}
+			
+			if(cmdLine.hasOption("uri")){
+				subCommand.put("uri", cmdLine.getOptionValue("uri"));
+			}
+			
+			newCommand.put("resource", subCommand);
+			
+    		serverOutput.writeUTF(newCommand.toJSONString());
+    		serverOutput.flush();
 			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
