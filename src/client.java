@@ -15,6 +15,8 @@ import org.apache.commons.cli.*;
 public class client {
 	public String hostname;
 	public int port;
+	public Boolean debugmode = false;
+	
 	public Socket connectionSock;
 	//public BufferedReader serverInput;
 	public DataInputStream serverInput;
@@ -43,13 +45,169 @@ public class client {
 		} 
         return str;     
 	}
+		
+	public Options CommandLineOrganize(){
+		
+		Option debug = Option.builder("debug")
+	  		 	   	   .required(false)
+	  		 	   	   .desc("turn on the debug mode")
+	  		 	   	   .build();
+		Option publish = Option.builder("publish")
+						.required(false)
+						.desc("publish resource on server")
+						.build();
+		Option name = Option.builder("name")
+					 .hasArg()
+					 .required(false)
+					 .desc("resource name")
+					 .build();
+		Option tags = Option.builder("tags")
+					 .required(false)
+					 .hasArgs()
+					 .desc("resource tags, tag1,tag2,tag3,...")
+					 .build();
+		Option description = Option.builder("description")
+				 			 .required(false)
+				 			 .hasArg()
+				 			 .desc("resource description")
+				 			 .build();
+		Option uri = Option.builder("uri")
+				 	 .required(true)
+				 	 .hasArg()
+				 	 .desc("resource URI")
+				 	 .build();
+		Option channel = Option.builder("channel")
+						 .required(false)
+						 .hasArg()
+						 .desc("adding the channel info of resource")
+						 .build();
+		Option owner = Option.builder("owner")
+					   .required(false)
+					   .hasArg()
+					   .desc("adding the owner info of resource")
+					   .build();
+		Option port = Option.builder("port")
+				  	  .required(false)
+				  	  .hasArg()
+				  	  .desc("specify the client connects to")
+				  	  .build();
 	
+		Option secret = Option.builder("secret")
+			  			.required(false)
+			  			.hasArg()
+			  			.desc("specify the server secret")
+			  			.build();
 	
+		Option host = Option.builder("host")
+			  		  .required(false)
+			  		  .hasArg()
+			  		  .desc("server host, a domain name or IP address")
+			  		  .build();
+		
+		Option servers = Option.builder("servers")
+		  		  	  .required(false)
+		  		  	  .hasArgs()
+		  		  	  .desc("server list, host1:port1,host2:port2,...")
+		  		  	  .build();
+		
+		Option exchange = Option.builder("exchange")
+	  		  	  		  .required(false)
+	  		  	  		  .desc("exchange server list with server")
+	  		  	  		  .build();
+		
+		Option fetch = Option.builder("fetch")
+	  	  		       .required(false)
+	  	  		       .desc("fetch resources from server ")
+	  	  		       .build();
+		
+		Option remove = Option.builder("remove")
+	  		       	    .required(false)
+	  		       	    .desc("remove resource from server")
+	  		       	    .build();
+		
+		Option query = Option.builder("query")
+		       	       .required(false)
+		       	       .desc("query resource from server")
+		       	       .build();
+		
+		Option share = Option.builder("share")
+		       	       .required(false)
+		       	       .desc("share resource on server")
+		       	       .build();
+		
+		
+		Options options = new Options();
+		
+		options.addOption(publish);
+		options.addOption(name);
+		options.addOption(tags);
+		options.addOption(description);
+		options.addOption(uri);
+		options.addOption(debug);
+		options.addOption(host);
+		options.addOption(owner);
+		options.addOption(channel);
+		options.addOption(secret);
+		options.addOption(port);
+		options.addOption(servers);
+		options.addOption(exchange);
+		options.addOption(fetch);
+		options.addOption(remove);
+		options.addOption(share);
+		options.addOption(query);
+		
+		return options;
+	}
 	
-	@SuppressWarnings("unchecked")
+	public JSONObject CommandParse(Options options, String[] args) throws ParseException{
+		
+		JSONObject newCommand = new JSONObject();
+		
+		CommandLineParser parser = new DefaultParser();
+		CommandLine cmdLine = parser.parse(options, args);
+		
+		JSONObject subCommand = new JSONObject();
+		
+		if(cmdLine.hasOption("debug")){
+			this.debugmode = true;
+		}
+		if(cmdLine.hasOption("publish")){
+			newCommand.put("command", "publish");
+		}
+
+		if(cmdLine.hasOption("name")){
+			subCommand.put("name", cmdLine.getOptionValue("name"));
+		}
+		
+		if(cmdLine.hasOption("tags")){
+			//String[] tagsarg = new String[2;
+			//ArrayList<String> tagsarg = new ArrayList<String>();
+			//tagsarg = cmdLine.getOptionValues("tags");
+			JSONArray arr = new JSONArray();
+			for(String temp : cmdLine.getOptionValues("tags")){
+				arr.add(temp);
+			}
+			//arr.add(tagsarg[0]);
+			//arr.add(tagsarg[1]);
+			subCommand.put("tags", arr);
+		}
+
+		if(cmdLine.hasOption("description")){
+			subCommand.put("description", cmdLine.getOptionValue("description"));
+		}
+		
+		if(cmdLine.hasOption("uri")){
+			subCommand.put("uri", cmdLine.getOptionValue("uri"));
+		}
+		
+		newCommand.put("resource", subCommand);
+		
+		return newCommand;
+	}
+	
 	public void run(){
 		try {
-			System.out.println("Connecting to server on port" + port);
+			System.out.println("Connecting to server" + hostname + "on port" + port);
 			connectionSock = new Socket(hostname, port);
 			/*//serverInput = new BufferedReader(
 			//		 new InputStreamReader(connectionSock.getInputStream()));
@@ -129,73 +287,8 @@ public class client {
 			
 			
 			fs.close();*/
-			JSONObject newCommand = new JSONObject();
 			
-			Option publish = Option.builder("publish")
-							.required(false)
-							.desc("publish a file in server")
-							.build();
-			Option name = Option.builder("name")
-						 .hasArg()
-						 .required(false)
-						 .desc("the name of publish resource")
-						 .build();
-			Option tags = Option.builder("tags")
-						 .required(false)
-						 .numberOfArgs(2)
-						 .desc("tags of resource")
-						 .build();
-			Option description = Option.builder("description")
-					 .required(false)
-					 .hasArg()
-					 .desc("description of resource")
-					 .build();
-			Option uri = Option.builder("uri")
-					 .required(true)
-					 .hasArg()
-					 .desc("location of resource")
-					 .build();
-			
-			Options options = new Options();
-			options.addOption(publish);
-			options.addOption(name);
-			options.addOption(tags);
-			options.addOption(description);
-			options.addOption(uri);
-			
-			CommandLineParser parser = new DefaultParser();
-			CommandLine cmdLine = parser.parse(options, Args);
-			
-			JSONObject subCommand = new JSONObject();
-			
-			if(cmdLine.hasOption("publish")){
-				newCommand.put("command", "publish");
-			}
-	
-			if(cmdLine.hasOption("name")){
-				subCommand.put("name", cmdLine.getOptionValue("name"));
-			}
-			
-			if(cmdLine.hasOption("tags")){
-				String[] tagsarg = new String[2];
-				tagsarg = cmdLine.getOptionValues("tags");
-				JSONArray arr = new JSONArray();
-				arr.add(tagsarg[0]);
-				arr.add(tagsarg[1]);
-				subCommand.put("tags", arr);
-			}
-
-			if(cmdLine.hasOption("description")){
-				subCommand.put("description", cmdLine.getOptionValue("description"));
-			}
-			
-			if(cmdLine.hasOption("uri")){
-				subCommand.put("uri", cmdLine.getOptionValue("uri"));
-			}
-			
-			newCommand.put("resource", subCommand);
-			
-    		serverOutput.writeUTF(newCommand.toJSONString());
+    		serverOutput.writeUTF(CommandParse(CommandLineOrganize(),Args).toJSONString());
     		serverOutput.flush();
 			
 		} catch (UnknownHostException e) {

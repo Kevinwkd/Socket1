@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import org.apache.commons.cli.*;
+
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -44,7 +45,7 @@ public class ClientHandler implements Runnable {
 			//clientOutput.close();
 			//clientInput.close();
 			//connectionSock.close();*/
-				
+		
 			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
 			clientInput = new DataInputStream(connectionSock.getInputStream());
 			
@@ -117,22 +118,12 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	public static int parseCommand(JSONObject command){
-		int result = 0;
-		
-		if(command.get("command name").equals("xxxxxxx")){
-			int x = Integer.parseInt(command.get("xxxxxxx").toString());
-			int y = Integer.parseInt(command.get("xxxxxxx").toString());
-			
-			switch (command.get("method_name").toString()){
-				
-			}
+	/*public static int parseCommand(JSONObject command){
 
-		}
-		
-		
-		return result;
-	}
+	
+	}*/
+	
+
 	
 }
 
