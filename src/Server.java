@@ -5,16 +5,23 @@ import org.apache.commons.cli.*;
 import org.apache.commons.lang3.RandomStringUtils;
 
 public class Server {
+	//the port number server listens to
 	public int port = 7654;
+	//the server's secret
 	private String secret = null; 
+	//Server's host name
 	public String hostname = null;
+	
 	public int connectionintervallimit = 0;
+	
 	public int exchangeinterval = 0;
-	public Boolean debugmode = false;
+	//debug flag
+	public boolean debugmode = false;
 	
 	public ServerSocket serverSock;
 	public Socket connectionSock;
 	
+	//Counter to record the connected client number
 	public int counter = 0;
 	public String [] Args;
 	
@@ -38,7 +45,7 @@ public class Server {
 				connectionSock = serverSock.accept();
 			
 				counter ++;
-				ClientHandler handler = new ClientHandler(connectionSock,counter);
+				ClientHandler handler = new ClientHandler(connectionSock,counter, debugmode);
 				new Thread(handler).start();
 
 			
@@ -51,12 +58,21 @@ public class Server {
 		
 	}
 	
+	/**************************************************************
+	 * This method is used to generate the secret of server
+	 * @return the random key
+	 **************************************************************/
 	private String SecretGenerating(){
 		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:\'\",<.>/?";
 		String pwd = RandomStringUtils.random( 15, characters );
 		return pwd;
 	}
-	
+
+	/******************************************************************
+	 * This method save all the server command line argument into Apache
+	 * Options.
+	 * @return  Options options
+	 * ****************************************************************/
 	public Options CommandLineOrganize(){
 		
 		Option port = Option.builder("port")
@@ -83,12 +99,14 @@ public class Server {
 				  		    .type(Number.class)
 				  		    .desc("specify the connection interval limitation")
 				  		    .build();
+		
 		Option exchnge = Option.builder("exchangeinterval")
 				  		 .required(false)
 				  		 .hasArg()
 				  		 .type(Number.class)
 				  		 .desc("specify the exchange interval")
 				  		 .build();
+		
 		Option debug = Option.builder("debug")
 		  		 	   .required(false)
 		  		 	   .desc("turn on the debug mode")
@@ -107,6 +125,13 @@ public class Server {
 		
 	}
 
+	/************************************************************************
+	 * This method is used to parse server command line
+	 * argument and store the configuration variable. 
+	 * @param args: the client command line argument
+	 * @param options: the Apache Options stores all the command line format
+	 * @throws ParseException
+	 ************************************************************************/
 	public void Configuration(Options options, String[] args){
 		
 		try {

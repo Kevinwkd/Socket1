@@ -16,16 +16,18 @@ import org.json.simple.parser.ParseException;
 public class ClientHandler implements Runnable {
 	public int name;
 	public Date now;
+	public boolean debugmode = false;
 
 	public Socket connectionSock;
 	
 	public DataInputStream clientInput;
 	public DataOutputStream clientOutput;
 	
-	public ClientHandler(Socket connectionSock, int name){
+	public ClientHandler(Socket connectionSock, int name, boolean debug){
 		now = new Date();
 		this.connectionSock = connectionSock;
 		this.name = name;
+		debugmode = debug;
 	}
 	
 	public void run(){
@@ -103,7 +105,12 @@ public class ClientHandler implements Runnable {
 		    	if(clientInput.available() > 0){
 		    		// Attempt to convert read data to JSON
 		    		JSONObject command = (JSONObject) parser.parse(clientInput.readUTF());
-		    		System.out.println("COMMAND RECEIVED: "+command.toJSONString());
+		    		
+		    		if(debugmode){
+			    		System.out.println("COMMAND RECEIVED: "+command.toJSONString());		    			
+		    		} 
+		    		
+		    		parseCommand(command);
 		    		/*Integer result = parseCommand(command);
 		    		JSONObject results = new JSONObject();
 		    		results.put("result", result);
@@ -118,10 +125,38 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	/*public static int parseCommand(JSONObject command){
-
+	public static void parseCommand(JSONObject command){
+		
+		switch((String) command.get("command")){
+			case "publish":
+				
+				break;
+			case "share":
+				
+				break;
+			case "fetch":
+				
+				break;
+			case "query":
+				
+				break;
+			case "remove":
+				
+				break;
+			case "exchange":
+				
+				break;
+			default:
+				
+				try {
+					throw new Exception();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 	
-	}*/
+	}
 	
 
 	
