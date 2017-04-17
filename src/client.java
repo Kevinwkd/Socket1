@@ -1,7 +1,5 @@
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-
 import org.json.simple.*;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -13,17 +11,20 @@ import java.io.IOException;
 import org.apache.commons.cli.*;
 
 public class client {
+	//Server host name
 	public String hostname;
+	//Server port
 	public int port;
+	//debug flag
 	public Boolean debugmode = false;
 	
 	public Socket connectionSock;
-	//public BufferedReader serverInput;
+	//public DataInputStream serverInput;
 	public DataInputStream serverInput;
-	//public ObjectOutputStream serverOOutput;
+	//public DataOutputStream serverOOutput;
 	public DataOutputStream serverOutput;
-	//public PrintWriter serverOutput;
 	
+	//store commamd line arguments
 	public String [] Args;
 	
 	public client(String [] Args){
@@ -32,7 +33,7 @@ public class client {
 		this.Args = Args;
 	}
 	
-	public String InputContent(){
+	/*public String InputContent(){
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in)); 
         System.out.println("Enter your value:"); 
         String str = null;
@@ -44,66 +45,67 @@ public class client {
 			e.printStackTrace();
 		} 
         return str;     
-	}
-		
+	}*/
+
+	/******************************************************************
+	 * This method save all the client command line argument into Apache
+	 * Options.
+	 * @return  Options options
+	 * ****************************************************************/
 	public Options CommandLineOrganize(){
 		
 		Option debug = Option.builder("debug")
 	  		 	   	   .required(false)
 	  		 	   	   .desc("turn on the debug mode")
 	  		 	   	   .build();
+		
 		Option publish = Option.builder("publish")
 						.required(false)
 						.desc("publish resource on server")
 						.build();
+		
 		Option name = Option.builder("name")
 					 .hasArg()
 					 .required(false)
 					 .desc("resource name")
 					 .build();
+		
 		Option tags = Option.builder("tags")
 					 .required(false)
 					 .hasArgs()
 					 .desc("resource tags, tag1,tag2,tag3,...")
 					 .build();
+		
 		Option description = Option.builder("description")
 				 			 .required(false)
 				 			 .hasArg()
 				 			 .desc("resource description")
 				 			 .build();
+		
 		Option uri = Option.builder("uri")
 				 	 .required(true)
 				 	 .hasArg()
 				 	 .desc("resource URI")
 				 	 .build();
+		
 		Option channel = Option.builder("channel")
 						 .required(false)
 						 .hasArg()
 						 .desc("adding the channel info of resource")
 						 .build();
+		
 		Option owner = Option.builder("owner")
 					   .required(false)
 					   .hasArg()
 					   .desc("adding the owner info of resource")
 					   .build();
-		Option port = Option.builder("port")
-				  	  .required(false)
-				  	  .hasArg()
-				  	  .desc("specify the client connects to")
-				  	  .build();
-	
+		
 		Option secret = Option.builder("secret")
 			  			.required(false)
 			  			.hasArg()
 			  			.desc("specify the server secret")
 			  			.build();
 	
-		Option host = Option.builder("host")
-			  		  .required(false)
-			  		  .hasArg()
-			  		  .desc("server host, a domain name or IP address")
-			  		  .build();
-		
 		Option servers = Option.builder("servers")
 		  		  	  .required(false)
 		  		  	  .hasArgs()
@@ -144,11 +146,9 @@ public class client {
 		options.addOption(description);
 		options.addOption(uri);
 		options.addOption(debug);
-		options.addOption(host);
 		options.addOption(owner);
 		options.addOption(channel);
 		options.addOption(secret);
-		options.addOption(port);
 		options.addOption(servers);
 		options.addOption(exchange);
 		options.addOption(fetch);
@@ -159,36 +159,26 @@ public class client {
 		return options;
 	}
 	
-	public JSONObject CommandParse(Options options, String[] args) throws ParseException{
-		
-		JSONObject newCommand = new JSONObject();
-		
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmdLine = parser.parse(options, args);
+	/****************************************************************************
+	 * This method read the resource part of client command line and convert them
+	 * into JSON format.
+	 * @param cmdLine: the command line parser of the client command line argument
+	 * @return the json format object of resource argument
+	 ***************************************************************************/
+	public JSONObject ResourceTempleParse(CommandLine cmdLine){
 		
 		JSONObject subCommand = new JSONObject();
 		
-		if(cmdLine.hasOption("debug")){
-			this.debugmode = true;
-		}
-		if(cmdLine.hasOption("publish")){
-			newCommand.put("command", "publish");
-		}
-
 		if(cmdLine.hasOption("name")){
 			subCommand.put("name", cmdLine.getOptionValue("name"));
 		}
 		
 		if(cmdLine.hasOption("tags")){
-			//String[] tagsarg = new String[2;
-			//ArrayList<String> tagsarg = new ArrayList<String>();
-			//tagsarg = cmdLine.getOptionValues("tags");
+
 			JSONArray arr = new JSONArray();
 			for(String temp : cmdLine.getOptionValues("tags")){
 				arr.add(temp);
 			}
-			//arr.add(tagsarg[0]);
-			//arr.add(tagsarg[1]);
 			subCommand.put("tags", arr);
 		}
 
@@ -200,13 +190,77 @@ public class client {
 			subCommand.put("uri", cmdLine.getOptionValue("uri"));
 		}
 		
-		newCommand.put("resource", subCommand);
+		return subCommand;
+	}
+	
+	/*************************************************************************************
+	 * This method parse the client command line argument and convert them into respective
+	 * JSON format
+	 * @param options: the Options object that stores the format of all the client command line
+	 * @param args: the client command line argument
+	 * @return newCommand: the JSON format of client command line argument
+	 * @throws ParseException
+	 ************************************************************************************/
+	public JSONObject CommandParse(Options options, String[] args) throws ParseException{
+		
+		JSONObject newCommand = new JSONObject();
+		
+		CommandLineParser parser = new DefaultParser();
+		CommandLine cmdLine = parser.parse(options, args);
+		
+		if(cmdLine.hasOption("debug")){
+			this.debugmode = true;
+		}
+		
+		if(cmdLine.hasOption("publish")){
+			newCommand.put("command", "publish");
+			newCommand.put("resource", ResourceTempleParse(cmdLine));
+		}
+		
 		
 		return newCommand;
+	}
+
+	/************************************************************************
+	 * This method is used to parse the connection part of client command line
+	 * argument and store the configuration variable. 
+	 * @param args: the client command line argument
+	 * @throws ParseException
+	 ************************************************************************/
+	public void Configuration(String[] args) throws ParseException{
+		
+		Option port = Option.builder("port")
+			  	  .required(false)
+			  	  .hasArg()
+			  	  .desc("specify the client connects to")
+			  	  .build();
+		
+		Option host = Option.builder("host")
+		  		  .required(false)
+		  		  .hasArg()
+		  		  .desc("server host, a domain name or IP address")
+		  		  .build();
+		
+		Options options = new Options();
+		options.addOption(host);
+		options.addOption(port);
+		
+		CommandLineParser parser = new DefaultParser();
+		CommandLine cmdLine = parser.parse(options, args);
+		
+		if(cmdLine.hasOption("port")){
+			this.port = Integer.parseInt(cmdLine.getOptionValue("port"));
+		}
+		
+		if(cmdLine.hasOption("host")){
+			this.hostname = cmdLine.getOptionValue("host");
+		}
 	}
 	
 	public void run(){
 		try {
+			
+			Configuration(Args);
 			System.out.println("Connecting to server" + hostname + "on port" + port);
 			connectionSock = new Socket(hostname, port);
 			/*//serverInput = new BufferedReader(
