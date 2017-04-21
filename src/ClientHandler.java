@@ -91,7 +91,7 @@ public class ClientHandler implements Runnable {
 			JSONParser parser = new JSONParser();
 			
 			while(true){
-		    	if(clientInput.available() > 0){
+		    	//if(clientInput.available() > 0){
 		    		// Attempt to convert read data to JSON
 		    		JSONObject command = (JSONObject) parser.parse(clientInput.readUTF());
 		    		
@@ -99,12 +99,13 @@ public class ClientHandler implements Runnable {
 			    		System.out.println("COMMAND RECEIVED: "+command.toJSONString());		    			
 		    		} 
 		    		
-		    		parseCommand(command);
+		    		clientOutput.writeUTF(parseCommand(command).toString());
+		    		System.out.println("hhhhhh");
 		    		/*Integer result = parseCommand(command);
 		    		JSONObject results = new JSONObject();
 		    		results.put("result", result);
 		    		output.writeUTF(results.toJSONString());*/
-		    	}
+		    	//}
 		    }
 
 			
@@ -114,12 +115,12 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	public static void parseCommand(JSONObject command) throws ParseException{
+	public static JSONObject parseCommand(JSONObject command) throws ParseException{
 		
 		switch((String) command.get("command")){
 			case "publish":
-				JSONObject temp = ParsePUBLISH(command, resourcelist);
-				break;
+				JSONObject res = ParsePUBLISH(command, resourcelist);
+				return res;
 			case "share":
 				
 				break;
@@ -144,6 +145,8 @@ public class ClientHandler implements Runnable {
 					e.printStackTrace();
 				}
 			}
+		return command;
+		
 	
 	}
 	
@@ -157,12 +160,12 @@ public class ClientHandler implements Runnable {
 			
 			JSONObject subcommand = (JSONObject) command.get("resource");
 			
-			temp.resource_name = (subcommand.get("name") != null) ? (String) subcommand.get("name") : "";
+			temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
 			temp.resource_description = (subcommand.get("description") != null) ? 
-					(String) subcommand.get("description") : "";
-			temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString() : "";
-			temp.channel = (subcommand.get("channel") != null) ? (String) subcommand.get("channel") : "";
-			temp.owner = (subcommand.get("owner") != null) ? (String) subcommand.get("owner") : "";
+					((String)subcommand.get("description")).trim() : "";
+			temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
+			temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
+			temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
 			
 			if(subcommand.get("uri") == null){
 				jsonobject.put("response", "error");

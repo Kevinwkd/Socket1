@@ -12,6 +12,8 @@ public class ServerResourceList {
 	
 	public ServerResourceList() {
 		// TODO Auto-generated constructor stub
+		this.publishedlist = new ArrayList<Resource>();
+		this.completedlist = new ArrayList<Resource>();
 	}
 	
 	public void ShareResource(){

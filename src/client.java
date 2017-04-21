@@ -334,6 +334,14 @@ public class client {
 			
     		serverOutput.writeUTF(command);
     		serverOutput.flush();
+    		
+    		 while(true){
+                 if(serverInput.available() > 0) {
+                     String message = serverInput.readUTF();
+                     System.out.println(message);
+                 }
+ 		
+	    }
 			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
