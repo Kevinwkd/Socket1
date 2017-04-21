@@ -1,23 +1,20 @@
 import java.net.Socket;
-import java.util.Date;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 //import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import org.apache.commons.cli.*;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import exceptions.URIException;
 
 public class ClientHandler implements Runnable {
 	public int name;
-	public boolean debugmode = false;
+	public boolean debugmode = true;
 
 	public Socket connectionSock;
 	
@@ -158,13 +155,12 @@ public class ClientHandler implements Runnable {
 		
 		if(command.get("resource") != null){
 			
-			JSONParser parser = new JSONParser();
-			JSONObject subcommand = (JSONObject) parser.parse((String) command.get("resource"));
+			JSONObject subcommand = (JSONObject) command.get("resource");
 			
 			temp.resource_name = (subcommand.get("name") != null) ? (String) subcommand.get("name") : "";
 			temp.resource_description = (subcommand.get("description") != null) ? 
 					(String) subcommand.get("description") : "";
-			temp.resource_tags = (subcommand.get("tags") != null) ? (String) subcommand.get("tags") : "";
+			temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString() : "";
 			temp.channel = (subcommand.get("channel") != null) ? (String) subcommand.get("channel") : "";
 			temp.owner = (subcommand.get("owner") != null) ? (String) subcommand.get("owner") : "";
 			
@@ -176,7 +172,14 @@ public class ClientHandler implements Runnable {
 				temp.resource_uri = (String) subcommand.get("uri");
 			}
 			
-			resourcelist.publishresource(temp);
+			if(resourcelist.publishresource(temp)){
+				jsonobject.put("response", "success");
+				return jsonobject;
+			}else{
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "cannot publish resource");
+				return jsonobject;
+			}
 			
 		}else{
 			jsonobject.put("response", "error");
@@ -184,8 +187,6 @@ public class ClientHandler implements Runnable {
 			return jsonobject;
 		}
 
-		
-		return jsonobject;
 	}
 	
 

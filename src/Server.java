@@ -16,7 +16,7 @@ public class Server {
 	
 	public int exchangeinterval = 0;
 	//debug flag
-	public boolean debugmode = false;
+	public boolean debugmode = true;
 	
 	public ServerSocket serverSock;
 	public Socket connectionSock;
