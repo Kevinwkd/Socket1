@@ -1,4 +1,6 @@
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +17,7 @@ import org.json.simple.parser.ParseException;
 public class ClientHandler implements Runnable {
 	public int name;
 	public boolean debugmode = true;
+	public static String secret;
 
 	public Socket connectionSock;
 	
@@ -24,11 +27,12 @@ public class ClientHandler implements Runnable {
 	public static ServerResourceList resourcelist;
 	public Resource resource;
 	
-	public ClientHandler(ServerResourceList resourcelist,Socket connectionSock, int name, boolean debug){
+	public ClientHandler(ServerResourceList resourcelist, Socket connectionSock, int name, String secret,boolean debug){
 		ClientHandler.resourcelist = resourcelist;
 		this.connectionSock = connectionSock;
 		this.name = name;
 		debugmode = debug;
+		this.secret = secret;
 	}
 	
 	public void run(){
@@ -150,31 +154,20 @@ public class ClientHandler implements Runnable {
 	
 	}
 	
-	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) throws ParseException{
+	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) 
+			throws ParseException{
 		
 		
 		JSONObject jsonobject = new JSONObject();
 		Resource temp = new Resource();
 		
-		if(command.get("resource") != null){
-			
-			JSONObject subcommand = (JSONObject) command.get("resource");
-			
-			temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
-			temp.resource_description = (subcommand.get("description") != null) ? 
-					((String)subcommand.get("description")).trim() : "";
-			temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
-			temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
-			temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
-			
-			if(subcommand.get("uri") == null){
-				jsonobject.put("response", "error");
-				jsonobject.put("errorMessage", "missing field");
-				return jsonobject;
-			}else{
-				temp.resource_uri = (String) subcommand.get("uri");
-			}
-			
+		if(command.get("resource") != null && (jsonobject = StoreResourceInfo(command, temp)) != null){
+			return jsonobject;
+		}else if(command.get("resource") == null){
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "missing field");
+			return jsonobject;
+		}else{
 			if(resourcelist.publishresource(temp)){
 				jsonobject.put("response", "success");
 				return jsonobject;
@@ -183,15 +176,79 @@ public class ClientHandler implements Runnable {
 				jsonobject.put("errorMessage", "cannot publish resource");
 				return jsonobject;
 			}
+		}
+		
+
+	}
+
+	private static JSONObject ParseSHARE(JSONObject command, ServerResourceList resourcelist){
+		
 			
-		}else{
+			JSONObject jsonobject = new JSONObject();
+			Resource temp = new Resource();
+			
+			if(command.get("resource") != null && (jsonobject = StoreResourceInfo(command, temp)) != null){
+				return jsonobject;
+			}else if(command.get("resource") == null){
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "missing field");
+				return jsonobject;
+			}else{
+				if(resourcelist.shareresource(temp)){
+					jsonobject.put("response", "success");
+					return jsonobject;
+				}else{
+					jsonobject.put("response", "error");
+					jsonobject.put("errorMessage", "cannot share resource");
+					return jsonobject;
+				}
+			}
+	}
+	
+	private static JSONObject StoreResourceInfo(JSONObject command,Resource resource){
+		JSONObject jsonobject = new JSONObject();
+		Resource temp = resource;
+		
+		JSONObject subcommand = (JSONObject) command.get("resource");
+		
+		temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
+		temp.resource_description = (subcommand.get("description") != null) ? 
+				((String)subcommand.get("description")).trim() : "";
+		temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
+		temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
+		temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
+		
+		if(command.get("command").equals("share") && !subcommand.get("secret").equals(secret)){
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "cannot share resource");
+			return jsonobject;
+		}
+		
+		if(subcommand.get("uri") == null){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "missing field");
 			return jsonobject;
+		}else{
+			
+			try {
+				URI uri = new URI((String) subcommand.get("uri"));
+				if((uri.getScheme().equals("file") && ((String)command.get("command")).equals("publish"))
+						||!uri.getScheme().equals("file") && ((String)command.get("command")).equals("share") ){
+					jsonobject.put("response", "error");
+					jsonobject.put("errorMessage", "invaild resource");
+					return jsonobject;
+				}
+				temp.resource_uri = (String) subcommand.get("uri");
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "invaild resource");
+				return jsonobject;
+			}
 		}
-
+		
+		return null;
 	}
-	
 
 	
 }

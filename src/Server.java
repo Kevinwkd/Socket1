@@ -52,7 +52,7 @@ public class Server {
 				connectionSock = serverSock.accept();
 			
 				counter ++;
-				ClientHandler handler = new ClientHandler(resourcelist, connectionSock, counter, debugmode);
+				ClientHandler handler = new ClientHandler(resourcelist, connectionSock, counter, secret, debugmode);
 				new Thread(handler).start();
 
 			}
