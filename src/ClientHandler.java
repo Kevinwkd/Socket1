@@ -1,30 +1,31 @@
 import java.net.Socket;
-import java.util.Date;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 //import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import org.apache.commons.cli.*;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+
 public class ClientHandler implements Runnable {
 	public int name;
-	public Date now;
-	public boolean debugmode = false;
+	public boolean debugmode = true;
 
 	public Socket connectionSock;
 	
 	public DataInputStream clientInput;
 	public DataOutputStream clientOutput;
 	
-	public ClientHandler(Socket connectionSock, int name, boolean debug){
-		now = new Date();
+	public static ServerResourceList resourcelist;
+	public Resource resource;
+	
+	public ClientHandler(ServerResourceList resourcelist,Socket connectionSock, int name, boolean debug){
+		ClientHandler.resourcelist = resourcelist;
 		this.connectionSock = connectionSock;
 		this.name = name;
 		debugmode = debug;
@@ -32,21 +33,9 @@ public class ClientHandler implements Runnable {
 	
 	public void run(){
 		try {
-			/*System.out.println("Connected to client" + name);
-			
-			clientInput = new DataInputStream(connectionSock.getInputStream());
-			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
-
-			System.out.println("Waiting for client " + "to send file."); 
-			String clientText = clientInput.readUTF();
-			String replyText = "Welcome, " + clientText + ", Today is " + now.toString() + "\n";
-			
-			clientOutput.writeUTF(replyText); 
-			System.out.println("Sent: " + replyText);
-			
 			//clientOutput.close();
 			//clientInput.close();
-			//connectionSock.close();*/
+			//connectionSock.close();
 		
 			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
 			clientInput = new DataInputStream(connectionSock.getInputStream());
@@ -102,7 +91,7 @@ public class ClientHandler implements Runnable {
 			JSONParser parser = new JSONParser();
 			
 			while(true){
-		    	if(clientInput.available() > 0){
+		    	//if(clientInput.available() > 0){
 		    		// Attempt to convert read data to JSON
 		    		JSONObject command = (JSONObject) parser.parse(clientInput.readUTF());
 		    		
@@ -110,12 +99,13 @@ public class ClientHandler implements Runnable {
 			    		System.out.println("COMMAND RECEIVED: "+command.toJSONString());		    			
 		    		} 
 		    		
-		    		parseCommand(command);
+		    		clientOutput.writeUTF(parseCommand(command).toString());
+		    		System.out.println("hhhhhh");
 		    		/*Integer result = parseCommand(command);
 		    		JSONObject results = new JSONObject();
 		    		results.put("result", result);
 		    		output.writeUTF(results.toJSONString());*/
-		    	}
+		    	//}
 		    }
 
 			
@@ -125,12 +115,12 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	public static void parseCommand(JSONObject command){
+	public static JSONObject parseCommand(JSONObject command) throws ParseException{
 		
 		switch((String) command.get("command")){
 			case "publish":
-				
-				break;
+				JSONObject res = ParsePUBLISH(command, resourcelist);
+				return res;
 			case "share":
 				
 				break;
@@ -155,7 +145,51 @@ public class ClientHandler implements Runnable {
 					e.printStackTrace();
 				}
 			}
+		return command;
+		
 	
+	}
+	
+	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) throws ParseException{
+		
+		
+		JSONObject jsonobject = new JSONObject();
+		Resource temp = new Resource();
+		
+		if(command.get("resource") != null){
+			
+			JSONObject subcommand = (JSONObject) command.get("resource");
+			
+			temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
+			temp.resource_description = (subcommand.get("description") != null) ? 
+					((String)subcommand.get("description")).trim() : "";
+			temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
+			temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
+			temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
+			
+			if(subcommand.get("uri") == null){
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "missing field");
+				return jsonobject;
+			}else{
+				temp.resource_uri = (String) subcommand.get("uri");
+			}
+			
+			if(resourcelist.publishresource(temp)){
+				jsonobject.put("response", "success");
+				return jsonobject;
+			}else{
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "cannot publish resource");
+				return jsonobject;
+			}
+			
+		}else{
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "missing field");
+			return jsonobject;
+		}
+
 	}
 	
 

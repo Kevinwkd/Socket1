@@ -83,7 +83,7 @@ public class client {
 				 			 .build();
 		
 		Option uri = Option.builder("uri")
-				 	 .required(true)
+				 	 .required(false)
 				 	 .hasArg()
 				 	 .desc("resource URI")
 				 	 .build();
@@ -106,7 +106,7 @@ public class client {
 			  			.desc("specify the server secret")
 			  			.build();
 	
-		Option servers = Option.builder("servers")
+		Option serverList = Option.builder("serverList")
 		  		  	  .required(false)
 		  		  	  .hasArgs()
 		  		  	  .desc("server list, host1:port1,host2:port2,...")
@@ -137,6 +137,18 @@ public class client {
 		       	       .desc("share resource on server")
 		       	       .build();
 		
+		Option port = Option.builder("port")
+			  	  .required(false)
+			  	  .hasArg()
+			  	  .desc("specify the client connects to")
+			  	  .build();
+		
+		Option host = Option.builder("host")
+		  		  .required(false)
+		  		  .hasArg()
+		  		  .desc("server host, a domain name or IP address")
+		  		  .build();
+		
 		
 		Options options = new Options();
 		
@@ -149,12 +161,14 @@ public class client {
 		options.addOption(owner);
 		options.addOption(channel);
 		options.addOption(secret);
-		options.addOption(servers);
+		options.addOption(serverList);
 		options.addOption(exchange);
 		options.addOption(fetch);
 		options.addOption(remove);
 		options.addOption(share);
 		options.addOption(query);
+		options.addOption(host);
+		options.addOption(port);
 		
 		return options;
 	}
@@ -194,7 +208,9 @@ public class client {
 	}
 	
 	/*************************************************************************************
-	 * This method parse the client command line argument and convert them into respective
+	 * This method  parse the connection part of client command line
+	 * argument and store the configuration variable.
+	 * And parse the client command line argument and convert them into respective
 	 * JSON format
 	 * @param options: the Options object that stores the format of all the client command line
 	 * @param args: the client command line argument
@@ -208,6 +224,16 @@ public class client {
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmdLine = parser.parse(options, args);
 		
+		if(cmdLine.hasOption("port")){
+			this.port = Integer.parseInt(cmdLine.getOptionValue("port"));
+		}
+		
+		if(cmdLine.hasOption("host")){
+			this.hostname = cmdLine.getOptionValue("host");
+		}
+		
+		System.out.println("Connecting to server:" + hostname + " on port " + port);
+		
 		if(cmdLine.hasOption("debug")){
 			this.debugmode = true;
 		}
@@ -220,48 +246,12 @@ public class client {
 		
 		return newCommand;
 	}
-
-	/************************************************************************
-	 * This method is used to parse the connection part of client command line
-	 * argument and store the configuration variable. 
-	 * @param args: the client command line argument
-	 * @throws ParseException
-	 ************************************************************************/
-	public void Configuration(String[] args) throws ParseException{
-		
-		Option port = Option.builder("port")
-			  	  .required(false)
-			  	  .hasArg()
-			  	  .desc("specify the client connects to")
-			  	  .build();
-		
-		Option host = Option.builder("host")
-		  		  .required(false)
-		  		  .hasArg()
-		  		  .desc("server host, a domain name or IP address")
-		  		  .build();
-		
-		Options options = new Options();
-		options.addOption(host);
-		options.addOption(port);
-		
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmdLine = parser.parse(options, args);
-		
-		if(cmdLine.hasOption("port")){
-			this.port = Integer.parseInt(cmdLine.getOptionValue("port"));
-		}
-		
-		if(cmdLine.hasOption("host")){
-			this.hostname = cmdLine.getOptionValue("host");
-		}
-	}
 	
 	public void run(){
 		try {
+			Options options = CommandLineOrganize();
+			String command = CommandParse(options,Args).toJSONString();
 			
-			Configuration(Args);
-			System.out.println("Connecting to server" + hostname + "on port" + port);
 			connectionSock = new Socket(hostname, port);
 			/*//serverInput = new BufferedReader(
 			//		 new InputStreamReader(connectionSock.getInputStream()));
@@ -342,8 +332,16 @@ public class client {
 			
 			fs.close();*/
 			
-    		serverOutput.writeUTF(CommandParse(CommandLineOrganize(),Args).toJSONString());
+    		serverOutput.writeUTF(command);
     		serverOutput.flush();
+    		
+    		 while(true){
+                 if(serverInput.available() > 0) {
+                     String message = serverInput.readUTF();
+                     System.out.println(message);
+                 }
+ 		
+	    }
 			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block

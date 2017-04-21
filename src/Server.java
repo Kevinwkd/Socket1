@@ -11,31 +11,38 @@ public class Server {
 	private String secret = null; 
 	//Server's host name
 	public String hostname = null;
-	
+	//Connection interval limitation
 	public int connectionintervallimit = 0;
 	
 	public int exchangeinterval = 0;
 	//debug flag
-	public boolean debugmode = false;
+	public boolean debugmode = true;
 	
 	public ServerSocket serverSock;
 	public Socket connectionSock;
 	
 	//Counter to record the connected client number
 	public int counter = 0;
+	//command line argument
 	public String [] Args;
+	
+	public ServerResourceList resourcelist;
 	
 	public Server(String [] Args){
 		this.Args = Args;
 		secret = SecretGenerating();
+		resourcelist = new ServerResourceList();
 		
 	}
 	
 	public void run(){
 		
+		
 		System.out.println("Starting the EZShare Server");
 		Configuration( CommandLineOrganize(), Args);
 		System.out.println("started");
+		
+		
 		
 		try {
 			
@@ -45,10 +52,9 @@ public class Server {
 				connectionSock = serverSock.accept();
 			
 				counter ++;
-				ClientHandler handler = new ClientHandler(connectionSock,counter, debugmode);
+				ClientHandler handler = new ClientHandler(resourcelist, connectionSock, counter, debugmode);
 				new Thread(handler).start();
 
-			
 			}
 			//serverSock.close();
 		} catch (IOException e) {
