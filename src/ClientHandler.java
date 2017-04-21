@@ -13,9 +13,10 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import exceptions.URIException;
+
 public class ClientHandler implements Runnable {
 	public int name;
-	public Date now;
 	public boolean debugmode = false;
 
 	public Socket connectionSock;
@@ -23,8 +24,11 @@ public class ClientHandler implements Runnable {
 	public DataInputStream clientInput;
 	public DataOutputStream clientOutput;
 	
-	public ClientHandler(Socket connectionSock, int name, boolean debug){
-		now = new Date();
+	public static ServerResourceList resourcelist;
+	public Resource resource;
+	
+	public ClientHandler(ServerResourceList resourcelist,Socket connectionSock, int name, boolean debug){
+		ClientHandler.resourcelist = resourcelist;
 		this.connectionSock = connectionSock;
 		this.name = name;
 		debugmode = debug;
@@ -32,21 +36,9 @@ public class ClientHandler implements Runnable {
 	
 	public void run(){
 		try {
-			/*System.out.println("Connected to client" + name);
-			
-			clientInput = new DataInputStream(connectionSock.getInputStream());
-			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
-
-			System.out.println("Waiting for client " + "to send file."); 
-			String clientText = clientInput.readUTF();
-			String replyText = "Welcome, " + clientText + ", Today is " + now.toString() + "\n";
-			
-			clientOutput.writeUTF(replyText); 
-			System.out.println("Sent: " + replyText);
-			
 			//clientOutput.close();
 			//clientInput.close();
-			//connectionSock.close();*/
+			//connectionSock.close();
 		
 			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
 			clientInput = new DataInputStream(connectionSock.getInputStream());
@@ -125,11 +117,11 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	public static void parseCommand(JSONObject command){
+	public static void parseCommand(JSONObject command) throws ParseException{
 		
 		switch((String) command.get("command")){
 			case "publish":
-				
+				JSONObject temp = ParsePUBLISH(command, resourcelist);
 				break;
 			case "share":
 				
@@ -156,6 +148,44 @@ public class ClientHandler implements Runnable {
 				}
 			}
 	
+	}
+	
+	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) throws ParseException{
+		
+		
+		JSONObject jsonobject = new JSONObject();
+		Resource temp = new Resource();
+		
+		if(command.get("resource") != null){
+			
+			JSONParser parser = new JSONParser();
+			JSONObject subcommand = (JSONObject) parser.parse((String) command.get("resource"));
+			
+			temp.resource_name = (subcommand.get("name") != null) ? (String) subcommand.get("name") : "";
+			temp.resource_description = (subcommand.get("description") != null) ? 
+					(String) subcommand.get("description") : "";
+			temp.resource_tags = (subcommand.get("tags") != null) ? (String) subcommand.get("tags") : "";
+			temp.channel = (subcommand.get("channel") != null) ? (String) subcommand.get("channel") : "";
+			temp.owner = (subcommand.get("owner") != null) ? (String) subcommand.get("owner") : "";
+			
+			if(subcommand.get("uri") == null){
+				jsonobject.put("response", "error");
+				jsonobject.put("errorMessage", "missing field");
+				return jsonobject;
+			}else{
+				temp.resource_uri = (String) subcommand.get("uri");
+			}
+			
+			resourcelist.publishresource(temp);
+			
+		}else{
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "missing field");
+			return jsonobject;
+		}
+
+		
+		return jsonobject;
 	}
 	
 

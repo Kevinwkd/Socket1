@@ -83,7 +83,7 @@ public class client {
 				 			 .build();
 		
 		Option uri = Option.builder("uri")
-				 	 .required(true)
+				 	 .required(false)
 				 	 .hasArg()
 				 	 .desc("resource URI")
 				 	 .build();
@@ -106,7 +106,7 @@ public class client {
 			  			.desc("specify the server secret")
 			  			.build();
 	
-		Option servers = Option.builder("servers")
+		Option serverList = Option.builder("serverList")
 		  		  	  .required(false)
 		  		  	  .hasArgs()
 		  		  	  .desc("server list, host1:port1,host2:port2,...")
@@ -149,7 +149,7 @@ public class client {
 		options.addOption(owner);
 		options.addOption(channel);
 		options.addOption(secret);
-		options.addOption(servers);
+		options.addOption(serverList);
 		options.addOption(exchange);
 		options.addOption(fetch);
 		options.addOption(remove);
