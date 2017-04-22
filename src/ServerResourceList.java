@@ -1,3 +1,6 @@
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
@@ -16,11 +19,23 @@ public class ServerResourceList {
 		this.completedlist = new ArrayList<Resource>();
 	}
 	
-	public void ShareResource(){
+	public boolean ShareResource(Resource resource) throws URISyntaxException{
+		for(Resource temp : this.publishedlist){
+			if(resource.resource_uri == temp.resource_uri && resource.channel == temp.channel ){
+				if(resource.owner == temp.owner) return true;
+				else return false;
+			}
+		}
+		URI uri = new URI(resource.resource_uri);
+		File f = new File(uri.getPath());
+		if(f.exists()){
+			publishedlist.add(resource);
+		}else{ return false; }
 		
+		return true;
 	}
 
-	public boolean publishresource(Resource resource){
+	public boolean PublishResource(Resource resource){
 		for(Resource temp : this.publishedlist){
 			if(resource.resource_uri == temp.resource_uri && resource.channel == temp.channel ){
 				if(resource.owner == temp.owner) return true;

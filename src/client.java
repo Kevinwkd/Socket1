@@ -204,6 +204,14 @@ public class client {
 			subCommand.put("uri", cmdLine.getOptionValue("uri"));
 		}
 		
+		if(cmdLine.hasOption("channel")){
+			subCommand.put("channel", cmdLine.getOptionValue("channel"));
+		}
+		
+		if(cmdLine.hasOption("owner")){
+			subCommand.put("owner", cmdLine.getOptionValue("owner"));
+		}
+		
 		return subCommand;
 	}
 	
@@ -240,6 +248,16 @@ public class client {
 		
 		if(cmdLine.hasOption("publish")){
 			newCommand.put("command", "publish");
+			newCommand.put("resource", ResourceTempleParse(cmdLine));
+		}
+		
+		if(cmdLine.hasOption("share")){
+			newCommand.put("command", "share");
+			newCommand.put("resource", ResourceTempleParse(cmdLine));
+		}
+		
+		if(cmdLine.hasOption("secret")){
+			newCommand.put("secret", cmdLine.getOptionValue("secret"));
 			newCommand.put("resource", ResourceTempleParse(cmdLine));
 		}
 		

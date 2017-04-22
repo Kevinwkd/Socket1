@@ -113,21 +113,23 @@ public class ClientHandler implements Runnable {
 		    }
 
 			
-		} catch (IOException | ParseException e) {
+		} catch (IOException | ParseException | URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public static JSONObject parseCommand(JSONObject command) throws ParseException{
+	public static JSONObject parseCommand(JSONObject command) 
+			throws ParseException, URISyntaxException{
 		
+		JSONObject res = new JSONObject();
 		switch((String) command.get("command")){
 			case "publish":
-				JSONObject res = ParsePUBLISH(command, resourcelist);
+				res = ParsePUBLISH(command, resourcelist);
 				return res;
 			case "share":
-				
-				break;
+				res = ParseSHARE(command, resourcelist);
+				return res;
 			case "fetch":
 				
 				break;
@@ -157,18 +159,18 @@ public class ClientHandler implements Runnable {
 	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) 
 			throws ParseException{
 		
-		
+		JSONObject tempobject;
 		JSONObject jsonobject = new JSONObject();
 		Resource temp = new Resource();
 		
-		if(command.get("resource") != null && (jsonobject = StoreResourceInfo(command, temp)) != null){
-			return jsonobject;
+		if(command.get("resource") != null && (tempobject = StoreResourceInfo(command, temp)) != null){
+			return tempobject;
 		}else if(command.get("resource") == null){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "missing field");
 			return jsonobject;
 		}else{
-			if(resourcelist.publishresource(temp)){
+			if(resourcelist.PublishResource(temp)){
 				jsonobject.put("response", "success");
 				return jsonobject;
 			}else{
@@ -181,20 +183,20 @@ public class ClientHandler implements Runnable {
 
 	}
 
-	private static JSONObject ParseSHARE(JSONObject command, ServerResourceList resourcelist){
+	private static JSONObject ParseSHARE(JSONObject command, ServerResourceList resourcelist) throws URISyntaxException{
 		
-			
+			JSONObject tempobject;
 			JSONObject jsonobject = new JSONObject();
 			Resource temp = new Resource();
 			
-			if(command.get("resource") != null && (jsonobject = StoreResourceInfo(command, temp)) != null){
-				return jsonobject;
+			if(command.get("resource") != null && (tempobject = StoreResourceInfo(command, temp)) != null){
+				return tempobject;
 			}else if(command.get("resource") == null){
 				jsonobject.put("response", "error");
 				jsonobject.put("errorMessage", "missing field");
 				return jsonobject;
 			}else{
-				if(resourcelist.shareresource(temp)){
+				if(resourcelist.ShareResource(temp)){
 					jsonobject.put("response", "success");
 					return jsonobject;
 				}else{
@@ -218,7 +220,7 @@ public class ClientHandler implements Runnable {
 		temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
 		temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
 		
-		if(command.get("command").equals("share") && !subcommand.get("secret").equals(secret)){
+		if(command.get("command").equals("share") && !command.get("secret").equals(secret)){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "cannot share resource");
 			return jsonobject;
@@ -232,15 +234,19 @@ public class ClientHandler implements Runnable {
 			
 			try {
 				URI uri = new URI((String) subcommand.get("uri"));
+				File f = new File("F:" + uri.getPath());
+				
 				if((uri.getScheme().equals("file") && ((String)command.get("command")).equals("publish"))
-						||!uri.getScheme().equals("file") && ((String)command.get("command")).equals("share") ){
+					||(!uri.getScheme().equals("file") && ((String)command.get("command")).equals("share"))
+					||(((String)command.get("command")).equals("share") && (!f.isAbsolute() || uri.getAuthority() != null))){
+					
 					jsonobject.put("response", "error");
 					jsonobject.put("errorMessage", "invaild resource");
 					return jsonobject;
 				}
 				temp.resource_uri = (String) subcommand.get("uri");
 			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
+				System.out.println("URIEXCEption");
 				jsonobject.put("response", "error");
 				jsonobject.put("errorMessage", "invaild resource");
 				return jsonobject;

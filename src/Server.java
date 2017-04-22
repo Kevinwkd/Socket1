@@ -69,7 +69,7 @@ public class Server {
 	 * @return the random key
 	 **************************************************************/
 	private String SecretGenerating(){
-		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:\'\",<.>/?";
+		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:,<.>/?";
 		String pwd = RandomStringUtils.random( 15, characters );
 		return pwd;
 	}
