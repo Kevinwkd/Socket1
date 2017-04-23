@@ -125,26 +125,26 @@ public class ClientHandler implements Runnable {
 		}
 	}
 
-	public static JSONObject parseCommand(JSONObject command) 
+	public static ArrayList<JSONObject> parseCommand(JSONObject command) 
 			throws ParseException, URISyntaxException{
 		
-		JSONObject res = new JSONObject();
+		ArrayList<JSONObject> res = new ArrayList<JSONObject>();
 		switch((String) command.get("command")){
 			case "publish":
-				res = ParsePUBLISHSHARE(command, resourcelist);
+				res.add(ParsePUBLISHSHARE(command, resourcelist));
 				return res;
 			case "share":
-				res = ParsePUBLISHSHARE(command, resourcelist);
+				res.add(ParsePUBLISHSHARE(command, resourcelist));
 				return res;
 			case "fetch":
 				
 				break;
 			case "query":
-				
-				break;
+				res = ParseQUERY(command, resourcelist);
+				return res;
 			case "remove":
-				
-				break;
+				res.add(ParseREMOVE(command, resourcelist));
+				return res;
 			case "exchange":
 				
 				break;
@@ -157,7 +157,7 @@ public class ClientHandler implements Runnable {
 					e.printStackTrace();
 				}
 			}
-		return command;
+		return res;
 		
 	
 	}
@@ -213,14 +213,45 @@ public class ClientHandler implements Runnable {
 					jsontemp.put("uri", temp_2.resource_uri);
 					jsontemp.put("channel", temp_2.channel);
 					jsontemp.put("owner", temp_2.owner);
-					jsontemp.put("ezserver", null);
+					jsontemp.put("ezserver", temp_2.ezserver);
 					jsonlist.add(jsontemp);
 					jsontemp.clear();
 				}
+				jsontemp.put("responseSize", jsonlist.size());
+				jsonlist.add(jsontemp);
 			}
 			
 			return jsonlist;
 
+	}
+	
+	private static JSONObject ParseREMOVE(JSONObject command,ServerResourceList resourcelist){
+		JSONObject jsonobject = new JSONObject();
+		Resource temp = new Resource();
+		
+		JSONObject subcommand = (JSONObject) command.get("resource");
+		
+		if(subcommand.get("channel") == null || subcommand.get("owner") == null
+		   ||subcommand.get("uri") == null){
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "missing resource");
+			return jsonobject;
+		}
+		
+		temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
+		temp.resource_description = (subcommand.get("description") != null) ? 
+				((String)subcommand.get("description")).trim() : "";
+		temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
+		temp.ezserver = (subcommand.get("ezserver") != null) ? ((String)subcommand.get("ezserver")).trim() : null;
+		
+		if(resourcelist.RemoveResource(temp)){
+			jsonobject.put("response", "success");
+			return jsonobject;
+		}else{
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "cannot remove resource");
+			return jsonobject;
+		}
 	}
 	
 	private static JSONObject StoreResourceInfo(JSONObject command,Resource resource){
@@ -245,7 +276,7 @@ public class ClientHandler implements Runnable {
 		
 		if(subcommand.get("uri") == null && !command.get("command").equals("query")){
 			jsonobject.put("response", "error");
-			jsonobject.put("errorMessage", "missing field");
+			jsonobject.put("errorMessage", "missing resource");
 			return jsonobject;
 		}else if(command.get("command").equals("query")){
 			temp.resource_uri = (subcommand.get("uri") != null) ? (String) subcommand.get("uri") : "";

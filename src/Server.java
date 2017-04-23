@@ -14,7 +14,7 @@ public class Server {
 	//Connection interval limitation
 	public int connectionintervallimit = 0;
 	
-	public int exchangeinterval = 0;
+	public int exchangeinterval = 600;
 	//debug flag
 	public boolean debugmode = true;
 	

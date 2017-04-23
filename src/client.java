@@ -266,6 +266,11 @@ public class client {
 			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
+		if(cmdLine.hasOption("remove")){
+			newCommand.put("command", "remove");
+			newCommand.put("resource", ResourceTemplateStore(cmdLine));
+		}
+		
 		
 		return newCommand;
 	}
