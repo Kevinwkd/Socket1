@@ -1,6 +1,7 @@
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import org.apache.commons.cli.CommandLine;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -15,11 +18,12 @@ import org.json.simple.parser.ParseException;
 
 
 public class ClientHandler implements Runnable {
-	public int name;
+	public static int clientnum;
 	public boolean debugmode = true;
 	public static String secret;
-
-	public Socket connectionSock;
+	public static String hostname;
+	
+	public static Socket connectionSock;
 	
 	public DataInputStream clientInput;
 	public DataOutputStream clientOutput;
@@ -27,12 +31,14 @@ public class ClientHandler implements Runnable {
 	public static ServerResourceList resourcelist;
 	public Resource resource;
 	
-	public ClientHandler(ServerResourceList resourcelist, Socket connectionSock, int name, String secret,boolean debug){
+	public ClientHandler(ServerResourceList resourcelist, Socket connectionSock, String hostname, int clientnum, String secret,boolean debug){
 		ClientHandler.resourcelist = resourcelist;
 		this.connectionSock = connectionSock;
-		this.name = name;
+		this.clientnum = clientnum;
 		debugmode = debug;
 		this.secret = secret;
+		this.hostname = hostname;
+		System.out.println("Client " + clientnum + " connected to the server");
 	}
 	
 	public void run(){
@@ -125,10 +131,10 @@ public class ClientHandler implements Runnable {
 		JSONObject res = new JSONObject();
 		switch((String) command.get("command")){
 			case "publish":
-				res = ParsePUBLISH(command, resourcelist);
+				res = ParsePUBLISHSHARE(command, resourcelist);
 				return res;
 			case "share":
-				res = ParseSHARE(command, resourcelist);
+				res = ParsePUBLISHSHARE(command, resourcelist);
 				return res;
 			case "fetch":
 				
@@ -156,8 +162,8 @@ public class ClientHandler implements Runnable {
 	
 	}
 	
-	private static JSONObject ParsePUBLISH(JSONObject command, ServerResourceList resourcelist) 
-			throws ParseException{
+	private static JSONObject ParsePUBLISHSHARE(JSONObject command, ServerResourceList resourcelist) 
+			throws ParseException,URISyntaxException{
 		
 		JSONObject tempobject;
 		JSONObject jsonobject = new JSONObject();
@@ -170,12 +176,13 @@ public class ClientHandler implements Runnable {
 			jsonobject.put("errorMessage", "missing field");
 			return jsonobject;
 		}else{
-			if(resourcelist.PublishResource(temp)){
+			if((command.get("command").equals("publish") && resourcelist.PublishResource(temp))
+			  ||(command.get("command").equals("share") && resourcelist.ShareResource(temp))){
 				jsonobject.put("response", "success");
 				return jsonobject;
 			}else{
 				jsonobject.put("response", "error");
-				jsonobject.put("errorMessage", "cannot publish resource");
+				jsonobject.put("errorMessage", "cannot " +  command.get("command") + " resource");
 				return jsonobject;
 			}
 		}
@@ -183,28 +190,37 @@ public class ClientHandler implements Runnable {
 
 	}
 
-	private static JSONObject ParseSHARE(JSONObject command, ServerResourceList resourcelist) throws URISyntaxException{
+	private static ArrayList<JSONObject> ParseQUERY(JSONObject command, ServerResourceList resourcelist) {
 		
-			JSONObject tempobject;
-			JSONObject jsonobject = new JSONObject();
-			Resource temp = new Resource();
+			ArrayList<JSONObject> jsonlist = new ArrayList<JSONObject>();
+			ArrayList<Resource> resourcefound = new ArrayList<Resource>();
+			JSONObject jsontemp = new JSONObject();
 			
-			if(command.get("resource") != null && (tempobject = StoreResourceInfo(command, temp)) != null){
-				return tempobject;
-			}else if(command.get("resource") == null){
-				jsonobject.put("response", "error");
-				jsonobject.put("errorMessage", "missing field");
-				return jsonobject;
-			}else{
-				if(resourcelist.ShareResource(temp)){
-					jsonobject.put("response", "success");
-					return jsonobject;
-				}else{
-					jsonobject.put("response", "error");
-					jsonobject.put("errorMessage", "cannot share resource");
-					return jsonobject;
+			Resource temp_1 = new Resource();
+			StoreResourceInfo(command, temp_1);
+			if(command.get("relay").equals("false")){
+				resourcefound = resourcelist.queryResource(temp_1, false);
+			}
+			
+			if(!resourcefound.isEmpty()){
+				jsontemp.put("response", "success");
+				jsonlist.add(jsontemp);
+				jsontemp.clear();
+				for(Resource temp_2 : resourcefound){
+					jsontemp.put("name", temp_2.resource_name);		
+					jsontemp.put("tags", temp_2.resource_tags);
+					jsontemp.put("description",  temp_2.resource_description);
+					jsontemp.put("uri", temp_2.resource_uri);
+					jsontemp.put("channel", temp_2.channel);
+					jsontemp.put("owner", temp_2.owner);
+					jsontemp.put("ezserver", null);
+					jsonlist.add(jsontemp);
+					jsontemp.clear();
 				}
 			}
+			
+			return jsonlist;
+
 	}
 	
 	private static JSONObject StoreResourceInfo(JSONObject command,Resource resource){
@@ -219,17 +235,20 @@ public class ClientHandler implements Runnable {
 		temp.resource_tags = (subcommand.get("tags") != null) ? subcommand.get("tags").toString().trim() : "";
 		temp.channel = (subcommand.get("channel") != null) ? ((String)subcommand.get("channel")).trim() : "";
 		temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
+		temp.ezserver = hostname +" : " + connectionSock.getPort();
 		
 		if(command.get("command").equals("share") && !command.get("secret").equals(secret)){
 			jsonobject.put("response", "error");
-			jsonobject.put("errorMessage", "cannot share resource");
+			jsonobject.put("errorMessage", "incorrect secret");
 			return jsonobject;
 		}
 		
-		if(subcommand.get("uri") == null){
+		if(subcommand.get("uri") == null && !command.get("command").equals("query")){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "missing field");
 			return jsonobject;
+		}else if(command.get("command").equals("query")){
+			temp.resource_uri = (subcommand.get("uri") != null) ? (String) subcommand.get("uri") : "";
 		}else{
 			
 			try {
@@ -255,6 +274,8 @@ public class ClientHandler implements Runnable {
 		
 		return null;
 	}
+	
+
 
 	
 }

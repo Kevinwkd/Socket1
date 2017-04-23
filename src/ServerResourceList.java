@@ -37,7 +37,7 @@ public class ServerResourceList {
 
 	public boolean PublishResource(Resource resource){
 		for(Resource temp : this.publishedlist){
-			if(resource.resource_uri == temp.resource_uri && resource.channel == temp.channel ){
+			if(resource.resource_uri.equals(temp.resource_uri) && resource.channel.equals(temp.channel)){
 				if(resource.owner == temp.owner) return true;
 				else return false;
 			}
@@ -52,6 +52,27 @@ public class ServerResourceList {
 	
 	public void fetchResource(){
 		
+	}
+	
+	public ArrayList<Resource> queryResource(Resource resource, boolean relay){
+		ArrayList<Resource> res = new ArrayList<Resource>();
+		for(Resource temp : this.publishedlist){
+			if((!resource.channel.equals("") && resource.channel.equals(temp.channel))
+			  && (!resource.owner.equals("") && resource.owner.equals(temp.owner))
+			  && (!resource.resource_tags.equals("") && resource.resource_tags.contains(temp.resource_tags))
+			  && (!resource.resource_uri.equals("") && resource.resource_uri.equals(temp.resource_uri))
+			  && ((!resource.resource_name.equals("") && resource.resource_name.equals(temp.resource_name)) 
+				  || (!resource.resource_description.equals("") && resource.resource_description.equals(temp.resource_description)) 
+				  || (resource.resource_name.equals("") && resource.resource_description.equals("")))){
+				res.add(temp);
+
+			}else if(resource.resource_tags.equals("")){
+				res.add(temp);
+			}
+		}
+		return res;
+		
+
 	}
 	
 	private boolean isPublic(){

@@ -33,20 +33,6 @@ public class client {
 		this.Args = Args;
 	}
 	
-	/*public String InputContent(){
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in)); 
-        System.out.println("Enter your value:"); 
-        String str = null;
-		try {
-			str = br.readLine();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-        return str;     
-	}*/
-
 	/******************************************************************
 	 * This method save all the client command line argument into Apache
 	 * Options.
@@ -132,6 +118,12 @@ public class client {
 		       	       .desc("query resource from server")
 		       	       .build();
 		
+		Option relay = Option.builder("relay")
+	       	       	   .required(false)
+	       	       	   .hasArg()
+	       	       	   .desc("set relay value")
+	       	       	   .build();
+		
 		Option share = Option.builder("share")
 		       	       .required(false)
 		       	       .desc("share resource on server")
@@ -167,6 +159,7 @@ public class client {
 		options.addOption(remove);
 		options.addOption(share);
 		options.addOption(query);
+		options.addOption(relay);
 		options.addOption(host);
 		options.addOption(port);
 		
@@ -179,7 +172,7 @@ public class client {
 	 * @param cmdLine: the command line parser of the client command line argument
 	 * @return the json format object of resource argument
 	 ***************************************************************************/
-	public JSONObject ResourceTempleParse(CommandLine cmdLine){
+	public JSONObject ResourceTemplateStore(CommandLine cmdLine){
 		
 		JSONObject subCommand = new JSONObject();
 		
@@ -211,6 +204,8 @@ public class client {
 		if(cmdLine.hasOption("owner")){
 			subCommand.put("owner", cmdLine.getOptionValue("owner"));
 		}
+		
+		subCommand.put("ezserver", null);
 		
 		return subCommand;
 	}
@@ -248,17 +243,27 @@ public class client {
 		
 		if(cmdLine.hasOption("publish")){
 			newCommand.put("command", "publish");
-			newCommand.put("resource", ResourceTempleParse(cmdLine));
+			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
 		if(cmdLine.hasOption("share")){
 			newCommand.put("command", "share");
-			newCommand.put("resource", ResourceTempleParse(cmdLine));
+			if(cmdLine.hasOption("secret")){
+				newCommand.put("secret", cmdLine.getOptionValue("secret"));
+			}
+			
+			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
-		if(cmdLine.hasOption("secret")){
-			newCommand.put("secret", cmdLine.getOptionValue("secret"));
-			newCommand.put("resource", ResourceTempleParse(cmdLine));
+		
+		if(cmdLine.hasOption("query")){
+			newCommand.put("command", "query");
+			if(cmdLine.hasOption("relay")){
+				newCommand.put("relay", cmdLine.getOptionValue("relay"));
+			}else{
+				newCommand.put("relay", "true");
+			}
+			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
 		
