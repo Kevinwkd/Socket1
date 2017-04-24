@@ -18,12 +18,12 @@ import org.json.simple.parser.ParseException;
 
 
 public class ClientHandler implements Runnable {
-	public static int clientnum;
+	public int clientnum;
 	public boolean debugmode = true;
-	public static String secret;
-	public static String hostname;
+	public String secret;
+	public String hostname;
 	
-	public static Socket connectionSock;
+	public Socket connectionSock;
 	
 	public DataInputStream clientInput;
 	public DataOutputStream clientOutput;

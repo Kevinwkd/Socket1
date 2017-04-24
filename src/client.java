@@ -92,7 +92,7 @@ public class client {
 			  			.desc("specify the server secret")
 			  			.build();
 	
-		Option serverList = Option.builder("serverList")
+		Option server = Option.builder("server")
 		  		  	  .required(false)
 		  		  	  .hasArgs()
 		  		  	  .desc("server list, host1:port1,host2:port2,...")
@@ -153,7 +153,7 @@ public class client {
 		options.addOption(owner);
 		options.addOption(channel);
 		options.addOption(secret);
-		options.addOption(serverList);
+		options.addOption(server);
 		options.addOption(exchange);
 		options.addOption(fetch);
 		options.addOption(remove);
@@ -269,6 +269,27 @@ public class client {
 		if(cmdLine.hasOption("remove")){
 			newCommand.put("command", "remove");
 			newCommand.put("resource", ResourceTemplateStore(cmdLine));
+		}
+		
+		if(cmdLine.hasOption("exchange")){
+			newCommand.put("command", "exchange");
+		}
+		
+		if(cmdLine.hasOption("server")){
+			JSONObject subCommand = new JSONObject();
+			JSONArray subArray = new JSONArray();
+			String list[] = cmdLine.getOptionValues("server");
+			
+			for(String temp : list){
+		        String array[] = temp.split(":");
+				subCommand.put("hostname", array[0]);
+				subCommand.put("port", array[1]);
+				subArray.add(subCommand);
+				subCommand.clear();
+			}
+			
+			newCommand.put("serverList", subArray);
+			
 		}
 		
 		

@@ -118,6 +118,24 @@ public class CommandParse {
 		}
 	}
 	
+	public JSONObject ParseEXCHANGE(JSONObject command){
+		
+		JSONObject jsonobject = new JSONObject();
+		
+		if(command.get("serverList") != null){
+			
+		}else{
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage","missing or invalid server list");
+		}
+		
+		return jsonobject;
+	}
+	
+	private static void ForwardQuery(){
+		
+	}
+	
 	private static JSONObject StoreResourceInfo(JSONObject command,Resource resource){
 		JSONObject jsonobject = new JSONObject();
 		Resource temp = resource;
