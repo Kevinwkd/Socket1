@@ -1,5 +1,6 @@
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.io.IOException;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -27,12 +28,13 @@ public class Server {
 	public String [] Args;
 	
 	public ServerResourceList resourcelist;
+	public ArrayList<String> serverrecordslist;
 	
 	public Server(String [] Args){
 		this.Args = Args;
 		secret = SecretGenerating();
 		resourcelist = new ServerResourceList();
-		
+		serverrecordslist = new ArrayList<String>();
 	}
 	
 	public void run(){
@@ -52,7 +54,8 @@ public class Server {
 				connectionSock = serverSock.accept();
 			
 				counter ++;
-				ClientHandler handler = new ClientHandler(resourcelist, connectionSock, hostname, counter, secret, debugmode);
+				ClientHandler handler = new ClientHandler(resourcelist, connectionSock, 
+						hostname, counter, secret, serverrecordslist,debugmode);
 				new Thread(handler).start();
 
 			}
