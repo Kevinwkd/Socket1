@@ -44,6 +44,7 @@ public class ClientHandler implements Runnable {
 		this.hostname = hostname;
 		System.out.println("Client " + clientnum + " connected to the server");
 		
+		commandparse = new CommandParse(secret,connectionSock,hostname,resourcelist,serverrecordslist);
 	}
 	
 	public void run(){
