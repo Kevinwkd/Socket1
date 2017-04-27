@@ -28,8 +28,8 @@ public class client {
 	public String [] Args;
 	
 	public client(String [] Args){
-		hostname = "localhost";
-		port = 7654;
+		hostname = "sunrise.cis.unimelb.edu.au";
+		port = 3781;
 		this.Args = Args;
 	}
 	
@@ -242,12 +242,12 @@ public class client {
 		}
 		
 		if(cmdLine.hasOption("publish")){
-			newCommand.put("command", "publish");
+			newCommand.put("command", "PUBLISH");
 			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
 		if(cmdLine.hasOption("share")){
-			newCommand.put("command", "share");
+			newCommand.put("command", "SHARE");
 			if(cmdLine.hasOption("secret")){
 				newCommand.put("secret", cmdLine.getOptionValue("secret"));
 			}
@@ -257,7 +257,7 @@ public class client {
 		
 		
 		if(cmdLine.hasOption("query")){
-			newCommand.put("command", "query");
+			newCommand.put("command", "QUERY");
 			if(cmdLine.hasOption("relay")){
 				newCommand.put("relay", cmdLine.getOptionValue("relay"));
 			}else{
@@ -267,12 +267,12 @@ public class client {
 		}
 		
 		if(cmdLine.hasOption("remove")){
-			newCommand.put("command", "remove");
+			newCommand.put("command", "REMOVE");
 			newCommand.put("resource", ResourceTemplateStore(cmdLine));
 		}
 		
 		if(cmdLine.hasOption("exchange")){
-			newCommand.put("command", "exchange");
+			newCommand.put("command", "EXCHANGE");
 		}
 		
 		if(cmdLine.hasOption("server")){
@@ -292,6 +292,10 @@ public class client {
 			
 		}
 		
+		if(cmdLine.hasOption("fetch")){
+			newCommand.put("command", "FETCH");
+			newCommand.put("resource", ResourceTemplateStore(cmdLine));
+		}
 		
 		return newCommand;
 	}
