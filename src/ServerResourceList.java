@@ -2,41 +2,47 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Set;
 
 public class ServerResourceList {
 
 	//public ArrayList<Resource> publishedlist;
-	Hashtable<String, Resource> ResourceList;
+	Hashtable<PrimaryKey, Resource> publishedList;
 		
 	public ServerResourceList() {
 		// TODO Auto-generated constructor stub
 		//this.publishedlist = new ArrayList<Resource>();
-		ResourceList = new Hashtable<String, Resource>();
+		publishedList = new Hashtable<PrimaryKey,  Resource>();
 	}
 	
 	public boolean ShareResource(Resource resource) throws URISyntaxException{
-		/*for(Resource temp : this.publishedlist){
-			if(resource.resource_uri.equals(temp.resource_uri) && resource.channel.equals(temp.channel)){
-				if(resource.owner.equals(temp.owner)) return true;
-				else return false;
+
+		Set<PrimaryKey> keys = publishedList.keySet();
+		for(PrimaryKey temp : keys){
+			if(resource.channel.equals(temp.channel) && resource.owner.equals(temp.owner)
+			   && !resource.resource_uri.equals(temp.uri)){
+				return false;
 			}
-		}*/
-		if(ResourceList.containsKey(resource.channel) 
-		   && ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)){
-			if(ResourceList.get(resource.channel).owner.equals(resource.owner)){
-				ResourceList.remove(resource.channel);
-				ResourceList.put(resource.channel, resource);
+			
+			if(resource.channel.equals(temp.channel) && resource.owner.equals(temp.owner)
+			   && resource.resource_uri.equals(temp.uri)){
+				publishedList.put(temp, resource);
 				return true;
-			}else{ return false; }
+			}
 		}
+		
 		URI uri = new URI(resource.resource_uri);
 		File f = new File(uri.getPath());
 		if(f.exists()){
-			//publishedlist.add(resource);
-			ResourceList.put(resource.channel, resource);
+			PrimaryKey v = new PrimaryKey(resource.channel, resource.owner, resource.resource_uri);
+			publishedList.put(v, resource);
 			return true;
 		}else{ return false; }
+		
+		
+		
 			
 	}
 
@@ -46,7 +52,7 @@ public class ServerResourceList {
 				if(resource.owner == temp.owner) return true;
 				else return false;
 			}
-		}*/
+		}
 		if(ResourceList.containsKey(resource.channel) 
 		   && ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)){
 		   if(ResourceList.get(resource.channel).owner.equals(resource.owner)){
@@ -54,9 +60,22 @@ public class ServerResourceList {
 				ResourceList.put(resource.channel, resource);
 				return true;
 			}else{ return false; }
+		}*/
+		Set<PrimaryKey> keys = publishedList.keySet();
+		for(PrimaryKey temp : keys){
+			if(resource.channel.equals(temp.channel) && resource.owner.equals(temp.owner)
+			   && !resource.resource_uri.equals(temp.uri)){
+				return false;
+			}
+			
+			if(resource.channel.equals(temp.channel) && resource.owner.equals(temp.owner)
+			   && resource.resource_uri.equals(temp.uri)){
+				publishedList.put(temp, resource);
+				return true;
+			}
 		}
-		//publishedlist.add(resource);
-		ResourceList.put(resource.channel, resource);
+		PrimaryKey v = new PrimaryKey(resource.channel, resource.owner, resource.resource_uri);
+		publishedList.put(v, resource);
 		return true;
 	}
 	
@@ -68,78 +87,59 @@ public class ServerResourceList {
 				return true;
 			}
 		}*/
-		if(ResourceList.containsKey(resource.channel) 
-			&& ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)
-			&& ResourceList.get(resource.channel).owner.equals(resource.owner)){
-				ResourceList.remove(resource.channel);
-				return true;
+		
+		Set<PrimaryKey> keys = publishedList.keySet();
+		for(PrimaryKey temp : keys){
+			if(!resource.channel.isEmpty() && ! resource.channel.equals(temp.channel)){
+				continue;
+			}
+			
+			if(!resource.owner.isEmpty() && ! resource.owner.equals(temp.owner)){
+				continue;
+			}
+			
+			if(!resource.resource_uri.isEmpty() && ! resource.resource_uri.equals(temp.uri)){
+				continue;
+			}
+			publishedList.remove(temp);
+			return true;
 		}
 		return false;
 	}
 	
 	public void fetchResource(Resource resource){
-		if(ResourceList.containsKey(resource.channel)
-			&& ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)){
-				
-		}
+		
 	}
 	
 	public ArrayList<Resource> queryResource(Resource resource, boolean relay){
 		ArrayList<Resource> res = new ArrayList<Resource>();
 		
-		/*for(Resource temp : this.publishedlist){
-			if(!resource.channel.isEmpty() && !resource.channel.equals(temp.channel)){
+		Set<PrimaryKey> keys = publishedList.keySet();
+		for(PrimaryKey temp : keys){
+			if(!resource.channel.isEmpty() && ! resource.channel.equals(temp.channel)){
 				continue;
 			}
 			
-			if(!resource.owner.isEmpty() && !resource.owner.equals(temp.owner)){
+			if(!resource.owner.isEmpty() && ! resource.owner.equals(temp.owner)){
 				continue;
 			}
 			
-			if(!resource.resource_tags.isEmpty() && !resource.resource_tags.equals(temp.resource_tags)){
+			if(!resource.resource_uri.isEmpty() && ! resource.resource_uri.equals(temp.uri)){
 				continue;
 			}
 			
-			if(!resource.resource_uri.isEmpty() && !resource.resource_uri.equals(temp.resource_uri)){
+			if(!resource.resource_tags.isEmpty() && 
+			   !resource.resource_tags.equals(publishedList.get(temp).resource_tags)){
 				continue;
 			}
 			
-			if((!resource.resource_name.isEmpty() && !resource.resource_name.contains(temp.resource_name)) 
-			    || (!resource.resource_description.isEmpty() && !resource.resource_description.contains(temp.resource_description)) ){
+			if(!resource.resource_name.isEmpty() && !resource.resource_name.contains(publishedList.get(temp).resource_name)
+			  ||(!resource.resource_description.isEmpty() && !resource.resource_description.contains(publishedList.get(temp).resource_description))){
 				continue;
 			}
-			
-			res.add(temp);
-		}*/
-		
-		if(!ResourceList.containsKey(resource.channel) && !resource.channel.isEmpty()){
-			return res;
+			res.add(publishedList.get(temp));
 		}
-		
-		for(Resource temp : ResourceList.values()){
-			if(!resource.owner.isEmpty() && !resource.owner.equals(temp.owner)){
-				continue;
-			}
-			
-			if(!resource.resource_tags.isEmpty() && !resource.resource_tags.equals(temp.resource_tags)){
-				continue;
-			}
-			
-			if(!resource.resource_uri.isEmpty() && !resource.resource_uri.equals(temp.resource_uri)){
-				continue;
-			}
-			
-			if((!resource.resource_name.isEmpty() && !resource.resource_name.contains(temp.resource_name)) 
-			    || (!resource.resource_description.isEmpty() && !resource.resource_description.contains(temp.resource_description)) ){
-				continue;
-			}
-			res.add(temp);
-		}
-		
 		return res;
-		
-		
-
 	}
 	
 

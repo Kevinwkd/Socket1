@@ -178,6 +178,8 @@ public class client {
 		
 		if(cmdLine.hasOption("name")){
 			subCommand.put("name", cmdLine.getOptionValue("name"));
+		}else{
+			subCommand.put("name", "");
 		}
 		
 		if(cmdLine.hasOption("tags")){
@@ -187,22 +189,32 @@ public class client {
 				arr.add(temp);
 			}
 			subCommand.put("tags", arr);
+		}else{
+			subCommand.put("tags","");
 		}
 
 		if(cmdLine.hasOption("description")){
 			subCommand.put("description", cmdLine.getOptionValue("description"));
+		}else{
+			subCommand.put("description", "");
 		}
 		
 		if(cmdLine.hasOption("uri")){
 			subCommand.put("uri", cmdLine.getOptionValue("uri"));
+		}else{
+			subCommand.put("uri", "");
 		}
 		
 		if(cmdLine.hasOption("channel")){
 			subCommand.put("channel", cmdLine.getOptionValue("channel"));
+		}else{
+			subCommand.put("channel", "");
 		}
 		
 		if(cmdLine.hasOption("owner")){
 			subCommand.put("owner", cmdLine.getOptionValue("owner"));
+		}else{
+			subCommand.put("owner", "");
 		}
 		
 		subCommand.put("ezserver", null);
@@ -263,7 +275,7 @@ public class client {
 			}else{
 				newCommand.put("relay", "true");
 			}
-			newCommand.put("resource", ResourceTemplateStore(cmdLine));
+			newCommand.put("resourceTemplate", ResourceTemplateStore(cmdLine));
 		}
 		
 		if(cmdLine.hasOption("remove")){
@@ -294,7 +306,7 @@ public class client {
 		
 		if(cmdLine.hasOption("fetch")){
 			newCommand.put("command", "FETCH");
-			newCommand.put("resource", ResourceTemplateStore(cmdLine));
+			newCommand.put("resourceTemplate", ResourceTemplateStore(cmdLine));
 		}
 		
 		return newCommand;
