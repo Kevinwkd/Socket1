@@ -77,8 +77,11 @@ public class ServerResourceList {
 		return false;
 	}
 	
-	public void fetchResource(){
-		
+	public void fetchResource(Resource resource){
+		if(ResourceList.containsKey(resource.channel)
+			&& ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)){
+				
+		}
 	}
 	
 	public ArrayList<Resource> queryResource(Resource resource, boolean relay){
