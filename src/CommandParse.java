@@ -3,6 +3,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -81,8 +82,14 @@ public class CommandParse {
 					jsonlist.add(jsontemp);
 					jsontemp.clear();
 				}
-				jsontemp.put("responseSize", jsonlist.size());
+				jsontemp.put("responseSize", jsonlist.size() - 1);
 				jsonlist.add(jsontemp);
+			}else{
+				jsontemp.put("response", "success");
+				jsonlist.add((JSONObject) jsontemp.clone());
+				jsontemp.clear();
+				jsontemp.put("responseSize", jsonlist.size() - 1);
+				jsonlist.add((JSONObject) jsontemp.clone());
 			}
 			
 			return jsonlist;
@@ -139,8 +146,14 @@ public class CommandParse {
 	private static JSONObject StoreResourceInfo(JSONObject command,Resource resource){
 		JSONObject jsonobject = new JSONObject();
 		Resource temp = resource;
+		JSONObject subcommand;
 		
-		JSONObject subcommand = (JSONObject) command.get("resource");
+		if(command.get("command").equals("QUERY")){
+			subcommand = (JSONObject) command.get("resourceTemplate");
+		}else{
+			subcommand = (JSONObject) command.get("resource");
+		}
+		
 		
 		temp.resource_name = (subcommand.get("name") != null) ? ((String)subcommand.get("name")).trim() : "";
 		temp.resource_description = (subcommand.get("description") != null) ? 
@@ -150,17 +163,23 @@ public class CommandParse {
 		temp.owner = (subcommand.get("owner") != null) ? ((String)subcommand.get("owner")).trim() : "";
 		temp.ezserver = hostname +" : " + connectionSock.getPort();
 		
+		if(temp.owner.equals("*")){
+			jsonobject.put("response", "error");
+			jsonobject.put("errorMessage", "invaild resource");
+			return jsonobject;
+		}
+		
 		if(command.get("command").equals("share") && !command.get("secret").equals(secret)){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "incorrect secret");
 			return jsonobject;
 		}
 		
-		if(subcommand.get("uri") == null && !command.get("command").equals("query")){
+		if(subcommand.get("uri") == null && !command.get("command").equals("QUERY")){
 			jsonobject.put("response", "error");
 			jsonobject.put("errorMessage", "missing resource");
 			return jsonobject;
-		}else if(command.get("command").equals("query")){
+		}else if(command.get("command").equals("QUERY")){
 			temp.resource_uri = (subcommand.get("uri") != null) ? (String) subcommand.get("uri") : "";
 		}else{
 			

@@ -1,4 +1,3 @@
-
 public class PrimaryKey {
 	
 	public String channel;

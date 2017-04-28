@@ -2,18 +2,14 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 
 public class ServerResourceList {
 
-	//public ArrayList<Resource> publishedlist;
 	Hashtable<PrimaryKey, Resource> publishedList;
 		
 	public ServerResourceList() {
-		// TODO Auto-generated constructor stub
-		//this.publishedlist = new ArrayList<Resource>();
 		publishedList = new Hashtable<PrimaryKey,  Resource>();
 	}
 	
@@ -40,27 +36,9 @@ public class ServerResourceList {
 			publishedList.put(v, resource);
 			return true;
 		}else{ return false; }
-		
-		
-		
-			
 	}
 
 	public boolean PublishResource(Resource resource){
-		/*for(Resource temp : this.publishedlist){
-			if(resource.resource_uri.equals(temp.resource_uri) && resource.channel.equals(temp.channel)){
-				if(resource.owner == temp.owner) return true;
-				else return false;
-			}
-		}
-		if(ResourceList.containsKey(resource.channel) 
-		   && ResourceList.get(resource.channel).resource_uri.equals(resource.resource_uri)){
-		   if(ResourceList.get(resource.channel).owner.equals(resource.owner)){
-				ResourceList.remove(resource.channel);
-				ResourceList.put(resource.channel, resource);
-				return true;
-			}else{ return false; }
-		}*/
 		Set<PrimaryKey> keys = publishedList.keySet();
 		for(PrimaryKey temp : keys){
 			if(resource.channel.equals(temp.channel) && resource.owner.equals(temp.owner)

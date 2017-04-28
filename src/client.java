@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.IOException;
 import org.apache.commons.cli.*;
 
@@ -232,16 +233,22 @@ public class client {
 	 * @return newCommand: the JSON format of client command line argument
 	 * @throws ParseException
 	 ************************************************************************************/
-	public JSONObject CommandParse(Options options, String[] args) throws ParseException{
+	public JSONObject CommandParse(Options options, String[] args){
 		
 		JSONObject newCommand = new JSONObject();
 		
 		CommandLineParser parser = new DefaultParser();
-		CommandLine cmdLine = parser.parse(options, args);
+		CommandLine cmdLine;
+		try {
+			cmdLine = parser.parse(options, args);
+		} catch (ParseException e) {
+			newCommand.put("command","unknown");
+			return newCommand;
+		}
 		
 		if(cmdLine.hasOption("port")){
 			this.port = Integer.parseInt(cmdLine.getOptionValue("port"));
-		}
+		} 
 		
 		if(cmdLine.hasOption("host")){
 			this.hostname = cmdLine.getOptionValue("host");
@@ -406,15 +413,13 @@ public class client {
                      System.out.println(message);
                  }
  		
-	    }
+    		 }
+    		 
 			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
