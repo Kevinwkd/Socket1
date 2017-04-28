@@ -137,22 +137,22 @@ public class ClientHandler implements Runnable {
 		
 		ArrayList<JSONObject> res = new ArrayList<JSONObject>();
 		switch((String) command.get("command")){
-			case "publish":
+			case "PUBLISH":
 				res.add(commandparse.ParsePUBLISHSHARE(command));
 				return res;
-			case "share":
+			case "SHARE":
 				res.add(commandparse.ParsePUBLISHSHARE(command));
 				return res;
-			case "fetch":
+			case "FETCH":
 				
 				break;
 			case "QUERY":
 				res = commandparse.ParseQUERY(command);
 				return res;
-			case "remove":
+			case "REMOVE":
 				res.add(commandparse.ParseREMOVE(command));
 				return res;
-			case "exchange":
+			case "EXCHANGE":
 				
 				break;
 			default:
