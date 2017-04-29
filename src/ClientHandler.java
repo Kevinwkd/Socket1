@@ -50,66 +50,15 @@ public class ClientHandler implements Runnable {
 	
 	public void run(){
 		try {
-			//clientOutput.close();
-			//clientInput.close();
-			//connectionSock.close();
 		
 			clientOutput = new DataOutputStream(connectionSock.getOutputStream());
 			clientInput = new DataInputStream(connectionSock.getInputStream());
 			
-			/*String fileName = clientInput.readUTF();
-			System.out.println(fileName);
-			long fileLength = clientInput.readLong();
-			System.out.println(fileLength);
-			
-			
-			
-			File f = new File("F:/eclipse-workspace/Socket1/src/temp/" );
-			if(!f.exists()){
-				f.mkdir();
-			}
-			String filepath = "F:/eclipse-workspace/Socket1/src/temp/" + fileName;
-			
-			FileOutputStream fs = new FileOutputStream(new File(filepath));
-			byte[] inputByte = new byte[1024];
-			double suml = 0;
-			int length = 0;
-			while ((length = clientInput.read(inputByte)) > 0){
-				double left = fileLength - suml;
-				if(left < 1024){
-					System.out.println("Already received: 100%");
-					fs.write(inputByte, 0, (int) left);
-					fs.flush();
-					break;
-				}else{
-					suml += length;
-					System.out.println("Already received:" + ((suml/fileLength)*100)+"%");
-					fs.write(inputByte, 0, length);
-					fs.flush();
-				}
-				
-			}
-			
-
-			JSONObject json = new JSONObject();
-			json.put("feedback", "Transfer complete");
-			System.out.println("Transfer complete");
-			clientOutput.writeUTF(json.toJSONString());
-			
-			String temp = clientInput.readUTF();
-			Object obj = JSONValue.parse(temp);
-			JSONObject jsonObject = (JSONObject)obj;
-			String confirm = (String)jsonObject.get("command");
-			System.out.println(confirm);
-
-			
-			fs.close();*/
 			
 			JSONParser parser = new JSONParser();
 			
 			while(true){
-		    	//if(clientInput.available() > 0){
-		    		// Attempt to convert read data to JSON
+		  
 		    		JSONObject command = (JSONObject) parser.parse(clientInput.readUTF());
 		    		
 		    		if(debugmode){
@@ -117,11 +66,31 @@ public class ClientHandler implements Runnable {
 		    		} 
 		    		
 		    		//clientOutput.writeUTF(parseCommand(command).toString());
-		    		
-		    		
-		    		for(JSONObject temp : parseCommand(command)){
-		    			clientOutput.writeUTF(temp.toString());
+		    		if(!((String) command.get("command")).equals("FETCH")){
+		    			for(JSONObject temp : parseCommand(command)){
+			    			clientOutput.writeUTF(temp.toString());
+			    		}
 		    		}
+		    		else{
+		    			ArrayList<JSONObject> ParsedCommand=new ArrayList<JSONObject>();
+		    			ParsedCommand=parseCommand(command);
+		    			clientOutput.writeUTF(ParsedCommand.get(0).toString());
+	    				clientOutput.flush();
+		    			if(ParsedCommand.get(0).get("response").equals("success")){
+			    			clientOutput.writeUTF(ParsedCommand.get(1).toString());
+			    			clientOutput.flush();
+			    			if(ParsedCommand.size()>2){
+				    			for(int index=0;index<(ParsedCommand.get(2)).size();index++){
+				    				clientOutput.write((((ParsedCommand.get(2))).get(String.valueOf(index))).toString().getBytes());
+				    				clientOutput.flush();
+				    			}
+				    			clientOutput.writeUTF(ParsedCommand.get(3).toString());
+				    			clientOutput.flush();
+			    			}
+		    			}
+		    		}
+		    		
+		    		
 
 		    }
 
@@ -144,8 +113,8 @@ public class ClientHandler implements Runnable {
 				res.add(commandparse.ParsePUBLISHSHARE(command));
 				return res;
 			case "FETCH":
-				
-				break;
+				res = commandparse.ParseFETCH(command);
+				return res;
 			case "QUERY":
 				res = commandparse.ParseQUERY(command);
 				return res;
@@ -153,8 +122,7 @@ public class ClientHandler implements Runnable {
 				res.add(commandparse.ParseREMOVE(command));
 				return res;
 			case "EXCHANGE":
-				
-				break;
+				res.add(commandparse.ParseEXCHANGE(command));
 			default:
 				
 				try {

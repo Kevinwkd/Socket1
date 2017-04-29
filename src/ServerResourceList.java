@@ -1,10 +1,22 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Set;
 
+import org.json.simple.JSONObject;
+
+/*************************************************************************
+ * This class mainly provides all the operations on the shared/published 
+ * resource list
+ * @author Team Tiger
+ * @since 2017-4-28
+ *************************************************************************/
 public class ServerResourceList {
 
 	Hashtable<PrimaryKey, Resource> publishedList;
@@ -30,7 +42,7 @@ public class ServerResourceList {
 		}
 		
 		URI uri = new URI(resource.resource_uri);
-		File f = new File(uri.getPath());
+		File f = new File(uri.getPath().substring(1, uri.getPath().length()));
 		if(f.exists()){
 			PrimaryKey v = new PrimaryKey(resource.channel, resource.owner, resource.resource_uri);
 			publishedList.put(v, resource);
@@ -85,9 +97,49 @@ public class ServerResourceList {
 		return false;
 	}
 	
-	public void fetchResource(Resource resource){
+	public JSONObject fetchResource(Resource resource) throws URISyntaxException{
+		JSONObject trigger = new JSONObject();
+		boolean find=false;
+		Set<PrimaryKey> keys = publishedList.keySet();
+		for(PrimaryKey temp : keys){
+			if((resource.channel.equals(null)&&temp.channel.equals(null)||resource.channel.equals(temp.channel))&&resource.resource_uri.equals(temp.uri)){
+				find=true;
+				break;
+			}
+		}
 		
+		if(find){
+			URI uri = new URI(resource.resource_uri);
+			File f = new File(uri.getPath());
+			trigger.put("result_size", 1);
+			trigger.put("resource_size",f.length());
+			RandomAccessFile byteFile = null;
+			try {
+				byteFile = new RandomAccessFile(f,"r");
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			byte[] sendingBuffer = new byte[80*1024];
+			int num,line=0;
+			// While there are still bytes to send..
+			try {
+				while((num = byteFile.read(sendingBuffer)) > 0){
+					trigger.put(String.valueOf(line),new String(Arrays.copyOf(sendingBuffer, num)));
+					line++;
+				}
+				byteFile.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else{
+			trigger.put("result_size", 0);
+		}
+		return trigger;
 	}
+	
 	
 	public ArrayList<Resource> queryResource(Resource resource, boolean relay){
 		ArrayList<Resource> res = new ArrayList<Resource>();
@@ -120,5 +172,5 @@ public class ServerResourceList {
 		return res;
 	}
 	
-
+	
 }

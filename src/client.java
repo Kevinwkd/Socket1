@@ -1,14 +1,15 @@
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+
 import org.json.simple.*;
+import org.json.simple.parser.JSONParser;
+
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+
 import org.apache.commons.cli.*;
 
 public class client {
@@ -28,9 +29,13 @@ public class client {
 	//store commamd line arguments
 	public String [] Args;
 	
+	public boolean FetchorNot=false,FileorNot=false;
+	
+	public String name="";
+	
 	public client(String [] Args){
-		hostname = "sunrise.cis.unimelb.edu.au";
-		port = 3781;
+		hostname = "localhost";//"sunrise.cis.unimelb.edu.au";
+		port = 7654;//3781;
 		this.Args = Args;
 	}
 	
@@ -93,7 +98,7 @@ public class client {
 			  			.desc("specify the server secret")
 			  			.build();
 	
-		Option server = Option.builder("server")
+		Option servers = Option.builder("servers")
 		  		  	  .required(false)
 		  		  	  .hasArgs()
 		  		  	  .desc("server list, host1:port1,host2:port2,...")
@@ -154,7 +159,7 @@ public class client {
 		options.addOption(owner);
 		options.addOption(channel);
 		options.addOption(secret);
-		options.addOption(server);
+		options.addOption(servers);
 		options.addOption(exchange);
 		options.addOption(fetch);
 		options.addOption(remove);
@@ -202,6 +207,10 @@ public class client {
 		
 		if(cmdLine.hasOption("uri")){
 			subCommand.put("uri", cmdLine.getOptionValue("uri"));
+			if(cmdLine.getOptionValue("uri").contains("file:")){
+				FileorNot=true;
+				name=cmdLine.getOptionValue("uri").split("/")[cmdLine.getOptionValue("uri").split("/").length-1];
+			}
 		}else{
 			subCommand.put("uri", "");
 		}
@@ -292,28 +301,28 @@ public class client {
 		
 		if(cmdLine.hasOption("exchange")){
 			newCommand.put("command", "EXCHANGE");
-		}
-		
-		if(cmdLine.hasOption("server")){
-			JSONObject subCommand = new JSONObject();
-			JSONArray subArray = new JSONArray();
-			String list[] = cmdLine.getOptionValues("server");
-			
-			for(String temp : list){
-		        String array[] = temp.split(":");
-				subCommand.put("hostname", array[0]);
-				subCommand.put("port", array[1]);
-				subArray.add(subCommand);
-				subCommand.clear();
+			if(cmdLine.hasOption("servers")){
+				JSONObject subCommand = new JSONObject();
+				JSONArray subArray = new JSONArray();
+				String list[] = cmdLine.getOptionValues("servers");
+				
+				for(String temp : list){
+			        String array[] = temp.split(":",2);
+					subCommand.put("hostname", array[0]);
+					subCommand.put("port", array[1]);
+					subArray.add(subCommand.clone());
+					subCommand.clear();
+				}
+				
+				newCommand.put("serverList", subArray);
+				
 			}
-			
-			newCommand.put("serverList", subArray);
-			
 		}
 		
 		if(cmdLine.hasOption("fetch")){
 			newCommand.put("command", "FETCH");
 			newCommand.put("resourceTemplate", ResourceTemplateStore(cmdLine));
+			FetchorNot=true;
 		}
 		
 		return newCommand;
@@ -325,29 +334,6 @@ public class client {
 			String command = CommandParse(options,Args).toJSONString();
 			
 			connectionSock = new Socket(hostname, port);
-			/*//serverInput = new BufferedReader(
-			//		 new InputStreamReader(connectionSock.getInputStream()));
-			serverInput = new DataInputStream(connectionSock.getInputStream());
-			serverOutput = new DataOutputStream(
-					connectionSock.getOutputStream());
-			//serverOutput = new PrintWriter(
-			//		connectionSock.getOutputStream());
-			
-			
-			
-			String str = null;
-			while(!(str = InputContent()).equals("Exit")){
-				//System.out.println("Input your content to server:");
-				//serverOutput.writeBytes("Dusty Rhodes\n");
-				serverOutput.writeUTF(str);
-				serverOutput.flush();
-			
-				System.out.println("Waiting for reply."); 
-				String serverData = serverInput.readUTF();
-				System.out.println("Received: " + serverData);
-				str = null;
-			}
-			
 			
 			//serverOutput.close(); 
 			//serverInput.close(); 
@@ -359,60 +345,24 @@ public class client {
 					connectionSock.getInputStream());
 			
 			
-
-			
-			/*File file = new File("F:/eclipse-workspace/Socket1/src/text.txt");
-			
-			serverOutput.writeUTF(file.getName());
-			serverOutput.flush();
-			serverOutput.writeLong(file.length());
-			serverOutput.flush();
-			
-			FileInputStream fs = new FileInputStream(file);
-			byte[] sendBytes = new byte[1024];
-			
-			int length = 0;
-			long l =file.length();
-			double suml = 0;
-			while((length = fs.read(sendBytes, 0, sendBytes.length)) > 0) {
-				suml += length;
-				System.out.println("Already transferred:" + ((suml/l)*100) + "%");
-				serverOutput.write(sendBytes);
-				serverOutput.flush();
-			}
-
-			ArrayList<String> arr = new ArrayList<String>();
-			for( String temp : Args){
-				arr.add(temp);
-			}
-			String jsonText = JSONValue.toJSONString(arr);  
-			JSONObject json = new JSONObject();
-			json.put("command", jsonText);
-			serverOutput.writeUTF(json.toJSONString());
-			
-			
-			
-			
-			
-			
-			String temp = serverInput.readUTF();
-			Object obj = JSONValue.parse(temp);
-			JSONObject jsonObject = (JSONObject)obj;
-			String confirm = (String)jsonObject.get("feedback");
-			System.out.println(temp);
-			
-			
-			fs.close();*/
-			
     		serverOutput.writeUTF(command);
     		serverOutput.flush();
     		
+    		boolean Fetchflag=FetchorNot,Fileflag=FileorNot;
+			String fileName = name;
+			FetchorNot=false;
+			FileorNot=false;
+			name=null;
+			String message;
+			
     		 while(true){
+    			 if(Fetchflag&&Fileflag&&serverInput.available() > 0){
+    				 readFetch(fileName);
+    			 }
                  if(serverInput.available() > 0) {
-                     String message = serverInput.readUTF();
+                     message = serverInput.readUTF();
                      System.out.println(message);
                  }
- 		
     		 }
     		 
 			
@@ -423,5 +373,78 @@ public class client {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public static int setChunkSize(long fileSizeRemaining){
+		// Determine the chunkSize
+		int chunkSize=80*1024;
+		
+		// If the file size remaining is less than the chunk size
+		// then set the chunk size to be equal to the file size.
+		if(fileSizeRemaining<chunkSize){
+			chunkSize=(int) fileSizeRemaining;
+		}
+		
+		return chunkSize;
+	}
+	
+	public void readFetch(String fileName) throws IOException{
+		String message;
+		int num=1;
+		 message = serverInput.readUTF();
+         System.out.println(message);//success or error
+         if(message.contains("success")){
+        	 message = serverInput.readUTF();
+             System.out.println(message);//file and website: resource; not found: resultsize=0
+             if(!message.contains("resultSize")){
+            	 //exact bytes
+     /*       	 while(num>=0){
+                     num = serverInput.read();
+                     System.out.println(num);
+            	 }
+                 //resultSize                        
+                 System.out.println(serverInput.readUTF());
+            	 // The file location*/
+					JSONParser parser = new JSONParser();
+				JSONObject commandback = null;
+				try {
+					commandback = (JSONObject) parser.parse(message);
+				} catch (org.json.simple.parser.ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+                  	
+						
+						// Create a RandomAccessFile to read and write the output file.
+						RandomAccessFile downloadingFile = new RandomAccessFile(fileName, "rw");
+						// Find out how much size is remaining to get from the server.
+						long fileSizeRemaining =Long.parseLong(commandback.get("resourceSize").toString());//Long.parseLong(message);
+						
+						int chunkSize = setChunkSize(fileSizeRemaining);
+						
+						// Represents the receiving buffer
+						byte[] receiveBuffer = new byte[chunkSize];
+
+                  while((num=serverInput.read(receiveBuffer))>0){
+							// Write the received bytes into the RandomAccessFile
+							downloadingFile.write(Arrays.copyOf(receiveBuffer, num));
+							
+							// Reduce the file size left to read..
+							fileSizeRemaining-=num;
+							
+							// Set the chunkSize again
+							chunkSize = setChunkSize(fileSizeRemaining);
+							receiveBuffer = new byte[chunkSize];
+							
+							// If you're done then break
+							if(fileSizeRemaining==0){
+								break;
+							}
+						}
+                  message = serverInput.readUTF();
+                  System.out.println(message);
+             }
+            
+         }
 	}
 }

@@ -1,6 +1,10 @@
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Timer;
 import java.io.IOException;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -11,7 +15,7 @@ public class Server {
 	//the server's secret
 	private String secret = null; 
 	//Server's host name
-	public String hostname = null;
+	public String hostname;
 	//Connection interval limitation
 	public int connectionintervallimit = 0;
 	
@@ -35,9 +39,15 @@ public class Server {
 		secret = SecretGenerating();
 		resourcelist = new ServerResourceList();
 		serverrecordslist = new ArrayList<String>();
+		try {
+			hostname = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
-	public void run(){
+	public void begin(){
 		
 		
 		System.out.println("Starting the EZShare Server");
@@ -64,6 +74,9 @@ public class Server {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		Timer timer = new Timer();
+		timer.schedule(new TimerExchangeTask(serverrecordslist), new Date(), exchangeinterval);
 		
 	}
 	

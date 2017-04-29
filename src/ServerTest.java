@@ -3,7 +3,7 @@ public class ServerTest {
 
 	public static void main(String[] args) {
 		
-		new Server(args).run();
+		new Server(args).begin();
 
 	}
 

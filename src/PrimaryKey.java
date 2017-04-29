@@ -1,3 +1,9 @@
+/**************************************************************************
+ * This class is the primary key of a resource, it consists of three fields:
+ * channel, owner and uri. A primary can identify only one specific resource
+ *  @author Team Tiger
+ *  @since 2017-4-28
+ **************************************************************************/
 public class PrimaryKey {
 	
 	public String channel;
